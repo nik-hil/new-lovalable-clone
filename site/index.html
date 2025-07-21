@@ -3,38 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Build Your Next Website</title>
+    <title>Craft. Create. Code. — Next-Generation Web Design</title>
     <link rel="stylesheet" href="/site/style.css">
 </head>
 <body>
     <div class="container">
-        <h1 class="hero-title">Build your next website with a single prompt</h1>
+        <h1 class="hero-title">Craft extraordinary websites.<br>One thought. Infinite possibilities.</h1>
         <form id="prompt-form">
             <textarea name="prompt" id="prompt-input" class="prompt-input" rows="3" 
-                placeholder="e.g., a modern landing page for a SaaS company that sells AI-powered widgets" required></textarea>
+                placeholder="Describe your vision — a revolutionary fintech platform, an immersive portfolio experience, or a premium e-commerce destination" required></textarea>
             <button type="submit" id="generate-btn" class="submit-button">
-                <span id="btn-text">Generate</span>
+                <span id="btn-text">Create</span>
                 <span id="loading-spinner" class="spinner" style="display: none;">⏳</span>
             </button>
         </form>
         
         <div class="usage-tip" style="margin-top: 15px; padding: 12px; background-color: #f0f8ff; border-radius: 6px; font-size: 0.9em; color: #0066cc;">
-            💡 <strong>Tip:</strong> For refinements, you can just describe the changes like "make it more modern", "change colors to blue", or "add a contact form"
+            ✨ <strong>Pro tip:</strong> Refine your creation effortlessly. Simply describe what you envision — "elevate the aesthetics", "embrace minimalism", or "integrate advanced functionality"
         </div>
         
         <div id="prompt-history" style="display: none;">
-            <h3>Prompt History</h3>
+            <h3>Creative History</h3>
             <div id="history-list" class="history-container"></div>
         </div>
         
         <div id="error-message" class="error-message" style="display: none;"></div>
         <div id="preview-container" style="display: none;">
             <div class="preview-header">
-                <h3>Website Preview</h3>
+                <h3>Live Preview</h3>
                 <div class="preview-actions">
-                    <button id="refine-btn" class="secondary-button">Refine Further</button>
-                    <button id="download-btn" class="action-button">Download ZIP</button>
-                    <a id="open-new-tab" href="#" target="_blank" class="submit-button">Open in New Tab</a>
+                    <button id="refine-btn" class="secondary-button">Refine Experience</button>
+                    <button id="download-btn" class="action-button">Export Project</button>
+                    <a id="open-new-tab" href="#" target="_blank" class="submit-button">Launch Experience</a>
                 </div>
             </div>
             <iframe id="preview-iframe" src="about:blank"></iframe>
@@ -81,22 +81,26 @@
                 if (result.preview_url) {
                     currentPreviewUrl = result.preview_url;
                     document.getElementById('preview-iframe').src = result.preview_url;
-                    document.getElementById('open-new-tab').href = result.preview_url;
+                    
+                    // Fix: Use the full URL for new tab instead of relative path
+                    const newTabUrl = result.new_tab_url || result.preview_url;
+                    document.getElementById('open-new-tab').href = newTabUrl;
+                    
                     document.getElementById('preview-container').style.display = 'block';
                     
                     // Clear the text area for next prompt
                     event.target.prompt.value = '';
-                    event.target.prompt.placeholder = 'Enter refinements like "make it more modern", "change colors to blue", "add a contact form"...';
+                    event.target.prompt.placeholder = 'Elevate your creation — "embrace minimalism", "amplify visual impact", "integrate seamless interactions"...';
                     
                     // Scroll to preview
                     document.getElementById('preview-container').scrollIntoView({ 
                         behavior: 'smooth' 
                     });
                 } else {
-                    showError(result.error || 'An unknown error occurred.');
+                    showError(result.error || 'Something extraordinary went wrong.');
                 }
             } catch (error) {
-                showError('Network error. Please check your connection and try again.');
+                showError('Connection interrupted. Please reconnect and continue creating.');
             } finally {
                 // Reset button state
                 generateBtn.disabled = false;
@@ -125,7 +129,7 @@
 
         document.getElementById('download-btn').addEventListener('click', async function() {
             if (!currentPreviewUrl) {
-                showError('Please generate a website first before downloading.');
+                showError('Please craft your masterpiece first before exporting.');
                 return;
             }
 
@@ -145,10 +149,10 @@
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
                 } else {
-                    showError('Failed to download website. Please try again.');
+                    showError('Export interrupted. Please try your export again.');
                 }
             } catch (error) {
-                showError('Network error. Please check your connection and try again.');
+                showError('Connection interrupted. Please reconnect and continue creating.');
             }
         });
         

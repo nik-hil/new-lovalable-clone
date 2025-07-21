@@ -32,3 +32,13 @@ build/
 *.swo
 *.swn
 *.png
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# MySQL data
+mysql_data/
+
+# Output directory (generated websites)
+output/

@@ -3,22 +3,21 @@ body {
     margin: 0;
     padding: 0;
     line-height: 1.6;
-    color: #f2f2f2; /* Light Gray Text */
+    color: #f5f5f5; /* Light Gray text */
     background-color: #1a2a6c; /* Dark Blue Background */
     overflow-x: hidden;
-    transition: background-color 0.3s ease; /* Smooth transition for background color */
 }
 
 header {
-    background-image: linear-gradient(to right, #1e3a8a, #2a47b1); /* Dark Blue Gradient */
+    background: linear-gradient(to right, #2980b9, #6dd5fa); /* Updated Gradient */
     color: white;
     padding: 20px 0;
     text-align: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .header-content {
-    max-width: 960px;
+    max-width: 1200px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -30,19 +29,20 @@ h1 {
     font-size: 2.5em;
     margin: 0;
     font-weight: 700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3); /* Add text shadow */
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3); /* Add a subtle text shadow */
 }
 
 nav a {
     display: inline-block;
     padding: 15px 25px;
-    background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent white */
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
     text-decoration: none;
     margin: 0 10px;
     border-radius: 5px;
     transition: background-color 0.3s ease, transform 0.2s ease;
     font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
 nav a:hover {
@@ -50,115 +50,135 @@ nav a:hover {
     transform: translateY(-2px);
 }
 
-
-#latest {
-    padding: 40px;
+#hero {
+    background-image: url('hero-image.jpg');
+    background-size: cover;
+    background-position: center;
+    height: 80vh; /* Use viewport height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    position: relative; /* for overlay */
 }
 
-.posts {
+.hero-content {
+    background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+    padding: 40px;
+    border-radius: 10px;
+    max-width: 800px;
+}
+
+#hero h2 {
+    font-size: 3em;
+    margin-bottom: 20px;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.cta-button {
+    background-image: linear-gradient(to right, #007bff, #0062cc); /* Blue Gradient */
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-position 0.3s ease;
+}
+
+.cta-button:hover {
+    background-position: right center;
+}
+
+
+#models {
+    padding: 40px 0;
+    text-align: center;
+}
+
+.model-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     grid-gap: 20px;
-    max-width: 960px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
-.post {
-    background-color: #293e8a; /* Slightly darker blue for posts */
+.model {
+    background-color: #293e8a;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    color: #f2f2f2; /* Light Gray text within posts */
-    position: relative; /* For overlay */
+    transition: transform 0.2s ease; /* Add a transition */
 }
 
-.post:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+.model:hover {
+    transform: translateY(-5px); /* Subtle lift on hover */
 }
 
-.post img {
+.model img {
     max-width: 100%;
     height: auto;
     margin-bottom: 15px;
     border-radius: 8px;
-    transition: transform 0.3s ease; /* Smooth transition for image */
 }
 
-.post img:hover{
-    transform: scale(1.05);
+#about, #contact {
+    padding: 40px 0;
+    text-align: center;
 }
 
-.post-content {
-    margin-top: 15px;
+
+#contact form {
+    max-width: 600px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
 }
 
-h3 {
-    font-size: 1.8em;
+#contact input, #contact textarea {
+    padding: 10px;
     margin-bottom: 10px;
-    font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-    color: white; /* White subheadings */
-}
-
-.post::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    border-radius: 8px;
-}
-
-.post:hover::before {
-    opacity: 1;
-}
-
-.read-more {
-    display: block; /* Changed to block for better layout */
-    padding: 10px 15px;
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    text-decoration: none;
+    border: 1px solid #ccc;
     border-radius: 5px;
-    margin-top: 10px;
-    transition: background-color 0.3s ease;
-    font-weight: 600;
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    opacity: 0;
-    transform: translateY(20px); /* Initial position for animation */
-    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-
-.post:hover .read-more {
-    opacity: 1;
-    transform: translateY(0);
+#contact button {
+    background-image: linear-gradient(to right, #007bff, #0062cc); /* Blue Gradient */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-position 0.3s ease;
 }
 
+#contact button:hover {
+    background-position: right center;
+}
 
 
 footer {
     text-align: center;
     padding: 20px;
-    background-color: #142159; /* Even darker blue for footer */
+    background-color: #142159;
     color: white;
 }
 
 @media (max-width: 768px) {
-    .posts {
+    .model-grid {
         grid-template-columns: 1fr;
     }
     .header-content {
         flex-direction: column;
         align-items: center;
+    }
+    #hero {
+        height: 60vh; /* Adjust hero height for smaller screens */
+    }
+    #contact form {
+        max-width: 90%;
     }
 }

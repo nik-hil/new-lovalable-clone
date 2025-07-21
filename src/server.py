@@ -1,10 +1,12 @@
 from flask import Flask, request, render_template, send_from_directory, jsonify, send_file
-from .main import create_website
+from main import create_website
 import os
+import re
 import zipfile
+import tempfile
 from io import BytesIO
 
-app = Flask(__name__, template_folder='site', static_folder=None)
+app = Flask(__name__, template_folder='../site', static_folder=None)
 
 @app.route('/')
 def index():
@@ -14,8 +16,12 @@ def index():
 def generate():
     try:
         prompt = request.form.get('prompt', '').strip()
+        
         if not prompt:
             return jsonify({"error": "Please provide a prompt to generate your website."}), 400
+        
+        if len(prompt) > 1000:
+            return jsonify({"error": "Prompt is too long. Please keep it under 1000 characters."}), 400
         
         result = create_website(prompt)
         
@@ -27,17 +33,20 @@ def generate():
 
         if main_file:
             preview_url = f"/output/{main_file}"
+            # Create the full URL for the new tab - this was the issue!
+            new_tab_url = f"{request.url_root}output/{main_file}"
             return jsonify({
                 "preview_url": preview_url,
-                "files_created": result.get("files", [])
+                "new_tab_url": new_tab_url,  # Add full URL for new tab
+                "files_generated": result.get("files", []),
+                "message": f"Successfully generated {len(result.get('files', []))} files"
             })
         else:
-            return jsonify({"error": "Could not determine the main file for preview."}), 500
-    
-    except ValueError as e:
-        return jsonify({"error": f"Configuration error: {str(e)}"}), 500
+            return jsonify({"error": "No HTML file was generated. Please try a different prompt."}), 500
+            
     except Exception as e:
-        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+        app.logger.error(f"Error in generate endpoint: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred. Please try again."}), 500
 
 @app.route('/download-zip')
 def download_zip():
@@ -72,11 +81,25 @@ def download_zip():
 
 @app.route('/site/<path:path>')
 def serve_site(path):
-    return send_from_directory('site', path)
+    return send_from_directory('../site', path)
 
 @app.route('/output/<path:path>')
 def serve_output(path):
-    return send_from_directory('output', path)
+    try:
+        return send_from_directory('../output', path)
+    except FileNotFoundError:
+        return "File not found", 404
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return jsonify({"error": "Page not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    # Create output directory if it doesn't exist
+    os.makedirs('output', exist_ok=True)
+    # Listen on all interfaces for Docker compatibility
+    app.run(debug=True, host='0.0.0.0', port=5001)

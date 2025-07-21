@@ -19,7 +19,7 @@ def create_website(prompt: str):
 
     # Check for existing files in the output directory
     existing_files = {}
-    output_dir = "output"
+    output_dir = "../output"
     if os.path.exists(output_dir):
         for filename in os.listdir(output_dir):
             with open(os.path.join(output_dir, filename), "r") as f:
@@ -100,8 +100,8 @@ def create_website(prompt: str):
 
     for filename, content in file_contents.items():
         # Ensure the output directory exists
-        os.makedirs("output", exist_ok=True)
-        with open(os.path.join("output", filename), "w") as f:
+        os.makedirs("../output", exist_ok=True)
+        with open(os.path.join("../output", filename), "w") as f:
             f.write(content)
     
     return {"files": list(file_contents.keys())}
