@@ -21,12 +21,19 @@
         <div class="usage-tip" style="margin-top: 15px; padding: 12px; background-color: #f0f8ff; border-radius: 6px; font-size: 0.9em; color: #0066cc;">
             💡 <strong>Tip:</strong> For refinements, you can just describe the changes like "make it more modern", "change colors to blue", or "add a contact form"
         </div>
+        
+        <div id="prompt-history" style="display: none;">
+            <h3>Prompt History</h3>
+            <div id="history-list" class="history-container"></div>
+        </div>
+        
         <div id="error-message" class="error-message" style="display: none;"></div>
         <div id="preview-container" style="display: none;">
             <div class="preview-header">
                 <h3>Website Preview</h3>
                 <div class="preview-actions">
                     <button id="refine-btn" class="secondary-button">Refine Further</button>
+                    <button id="download-btn" class="action-button">Download ZIP</button>
                     <a id="open-new-tab" href="#" target="_blank" class="submit-button">Open in New Tab</a>
                 </div>
             </div>
@@ -34,6 +41,9 @@
         </div>
     </div>
     <script>
+        let currentPreviewUrl = '';
+        let promptHistory = [];
+
         document.getElementById('prompt-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             
@@ -42,6 +52,9 @@
                 showError('Please enter a prompt to generate your website.');
                 return;
             }
+            
+            // Add to history before generating
+            addToHistory(prompt);
             
             // Show loading state
             const generateBtn = document.getElementById('generate-btn');
@@ -66,9 +79,14 @@
                 const result = await response.json();
                 
                 if (result.preview_url) {
+                    currentPreviewUrl = result.preview_url;
                     document.getElementById('preview-iframe').src = result.preview_url;
                     document.getElementById('open-new-tab').href = result.preview_url;
                     document.getElementById('preview-container').style.display = 'block';
+                    
+                    // Clear the text area for next prompt
+                    event.target.prompt.value = '';
+                    event.target.prompt.placeholder = 'Enter refinements like "make it more modern", "change colors to blue", "add a contact form"...';
                     
                     // Scroll to preview
                     document.getElementById('preview-container').scrollIntoView({ 
@@ -99,12 +117,75 @@
                 // If no refine container, just focus on main input for refinement
                 promptInput.focus();
                 promptInput.placeholder = 'Enter refinements like "make it more modern", "change colors to blue", "add a contact form"...';
-                promptInput.value = ''; // Clear for refinement input
                 
                 // Scroll to input
                 promptInput.scrollIntoView({ behavior: 'smooth' });
             }
         });
+
+        document.getElementById('download-btn').addEventListener('click', async function() {
+            if (!currentPreviewUrl) {
+                showError('Please generate a website first before downloading.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/download-zip', {
+                    method: 'GET',
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'website.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    showError('Failed to download website. Please try again.');
+                }
+            } catch (error) {
+                showError('Network error. Please check your connection and try again.');
+            }
+        });
+        
+        function addToHistory(prompt) {
+            promptHistory.push({
+                text: prompt,
+                timestamp: new Date().toLocaleString()
+            });
+            
+            updateHistoryDisplay();
+        }
+        
+        function updateHistoryDisplay() {
+            const historyContainer = document.getElementById('prompt-history');
+            const historyList = document.getElementById('history-list');
+            
+            if (promptHistory.length === 0) {
+                historyContainer.style.display = 'none';
+                return;
+            }
+            
+            historyContainer.style.display = 'block';
+            historyList.innerHTML = '';
+            
+            promptHistory.forEach((entry, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-number">${index + 1}.</div>
+                    <div class="history-content">
+                        <div class="history-text">${entry.text}</div>
+                        <div class="history-time">${entry.timestamp}</div>
+                    </div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
         
         function showError(message) {
             const errorDiv = document.getElementById('error-message');

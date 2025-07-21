@@ -9,25 +9,30 @@ A web application that ## Usage
    - "make a landing page for a coffee shop with warm colors"
 
 2. **Preview:** See your website in the preview iframe immediately
+3. **History:** Your prompt is automatically added to the history section (non-editable)
+4. **Clean slate:** The text area is cleared for your next prompt
 
 ### Refinement Process
-3. **Refine:** Click "Refine Further" and enter modification requests like:
+5. **Refine:** Click "Refine Further" and enter modification requests like:
    - "make it more modern with better colors"
    - "change the background to blue"
    - "add a contact form"
    - "make the typography more elegant"
 
-4. **Important:** For refinements, you **don't need to repeat the original prompt**. Just describe what you want to change:
+6. **Important:** For refinements, you **don't need to repeat the original prompt**. Just describe what you want to change:
    - ✅ Good: "make it more modern"
    - ❌ Avoid: "create a personal blog website for cars... make it more modern" (too long and repetitive)
 
-5. **Open in new tab:** Click the "Open in New Tab" button to view the full website
+### Export & Share
+7. **Download:** Click "Download ZIP" to get all website files in a ZIP archive
+8. **Open in new tab:** Click the "Open in New Tab" button to view the full website
 
 ### Pro Tips for Better Results
 - **Be specific but concise** in refinements
 - **Use design terminology**: "modern", "clean", "professional", "vibrant"
 - **Request specific changes**: "darker header", "larger fonts", "rounded corners"
-- **Ask for features**: "contact form", "gallery", "navigation menu"tes websites from natural language prompts using Google's Gemini AI, similar to Lovable.
+- **Ask for features**: "contact form", "gallery", "navigation menu"
+- **Check history** to see what prompts you've used beforetes websites from natural language prompts using Google's Gemini AI, similar to Lovable.
 
 ## Features
 
@@ -48,7 +53,9 @@ A simple website builder powered by Google's Gemini AI, inspired by Lovable. Gen
 - 🎨 Modern, responsive designs
 - 🔄 Iterative refinement - keep improving your website
 - 👀 Live preview with iframe
-- 🚀 Open generated sites in new tabs
+- � Prompt history tracking - see all your previous prompts
+- 💾 Download websites as ZIP files
+- �🚀 Open generated sites in new tabs
 - 📱 Mobile-friendly interface
 
 ## Setup
@@ -114,6 +121,7 @@ A simple website builder powered by Google's Gemini AI, inspired by Lovable. Gen
 
 - `GET /` - Main landing page
 - `POST /generate` - Generate website from prompt
+- `GET /download-zip` - Download generated website as ZIP file
 - `GET /site/<path>` - Serve landing page assets
 - `GET /output/<path>` - Serve generated website files
 

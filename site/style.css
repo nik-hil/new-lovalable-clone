@@ -117,6 +117,65 @@ body {
     text-align: left;
 }
 
+#prompt-history {
+    margin-top: 20px;
+    text-align: left;
+}
+
+#prompt-history h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.history-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    padding: 10px;
+}
+
+.history-item {
+    display: flex;
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 8px;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.history-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.history-number {
+    font-weight: bold;
+    color: #007bff;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.history-content {
+    flex: 1;
+}
+
+.history-text {
+    font-size: 0.9em;
+    color: #333;
+    line-height: 1.4;
+    margin-bottom: 5px;
+}
+
+.history-time {
+    font-size: 0.75em;
+    color: #666;
+    font-style: italic;
+}
+
 .spinner {
     animation: spin 1s linear infinite;
 }

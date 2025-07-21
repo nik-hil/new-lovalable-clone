@@ -6,6 +6,7 @@ body {
     color: #f2f2f2; /* Light Gray Text */
     background-color: #1a2a6c; /* Dark Blue Background */
     overflow-x: hidden;
+    transition: background-color 0.3s ease; /* Smooth transition for background color */
 }
 
 header {
@@ -29,6 +30,7 @@ h1 {
     font-size: 2.5em;
     margin: 0;
     font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3); /* Add text shadow */
 }
 
 nav a {
@@ -44,7 +46,7 @@ nav a {
 }
 
 nav a:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
 }
 
@@ -69,6 +71,7 @@ nav a:hover {
     overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     color: #f2f2f2; /* Light Gray text within posts */
+    position: relative; /* For overlay */
 }
 
 .post:hover {
@@ -81,6 +84,15 @@ nav a:hover {
     height: auto;
     margin-bottom: 15px;
     border-radius: 8px;
+    transition: transform 0.3s ease; /* Smooth transition for image */
+}
+
+.post img:hover{
+    transform: scale(1.05);
+}
+
+.post-content {
+    margin-top: 15px;
 }
 
 h3 {
@@ -91,21 +103,48 @@ h3 {
     color: white; /* White subheadings */
 }
 
+.post::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 8px;
+}
+
+.post:hover::before {
+    opacity: 1;
+}
+
 .read-more {
-    display: inline-block;
-    padding: 12px 20px;
-    background-image: linear-gradient(to right, #1e3a8a, #2a47b1); /* Dark Blue Gradient */
+    display: block; /* Changed to block for better layout */
+    padding: 10px 15px;
+    background-color: rgba(255, 255, 255, 0.2);
     color: white;
     text-decoration: none;
     border-radius: 5px;
     margin-top: 10px;
-    transition: background-position 0.3s ease;
+    transition: background-color 0.3s ease;
     font-weight: 600;
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    opacity: 0;
+    transform: translateY(20px); /* Initial position for animation */
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.read-more:hover {
-    background-position: right center;
+
+.post:hover .read-more {
+    opacity: 1;
+    transform: translateY(0);
 }
+
+
 
 footer {
     text-align: center;
