@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Next Website</title>
+    <link rel="stylesheet" href="/site/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="hero-title">Build your next website with a single prompt</h1>
+        <form id="prompt-form">
+            <textarea name="prompt" id="prompt-input" class="prompt-input" rows="3" 
+                placeholder="e.g., a modern landing page for a SaaS company that sells AI-powered widgets" required></textarea>
+            <button type="submit" id="generate-btn" class="submit-button">
+                <span id="btn-text">Generate</span>
+                <span id="loading-spinner" class="spinner" style="display: none;">⏳</span>
+            </button>
+        </form>
+        
+        <div class="usage-tip" style="margin-top: 15px; padding: 12px; background-color: #f0f8ff; border-radius: 6px; font-size: 0.9em; color: #0066cc;">
+            💡 <strong>Tip:</strong> For refinements, you can just describe the changes like "make it more modern", "change colors to blue", or "add a contact form"
+        </div>
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        <div id="preview-container" style="display: none;">
+            <div class="preview-header">
+                <h3>Website Preview</h3>
+                <div class="preview-actions">
+                    <button id="refine-btn" class="secondary-button">Refine Further</button>
+                    <a id="open-new-tab" href="#" target="_blank" class="submit-button">Open in New Tab</a>
+                </div>
+            </div>
+            <iframe id="preview-iframe" src="about:blank"></iframe>
+        </div>
+    </div>
+    <script>
+        document.getElementById('prompt-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const prompt = event.target.prompt.value.trim();
+            if (!prompt) {
+                showError('Please enter a prompt to generate your website.');
+                return;
+            }
+            
+            // Show loading state
+            const generateBtn = document.getElementById('generate-btn');
+            const btnText = document.getElementById('btn-text');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const errorMessage = document.getElementById('error-message');
+            
+            generateBtn.disabled = true;
+            btnText.style.display = 'none';
+            loadingSpinner.style.display = 'inline';
+            errorMessage.style.display = 'none';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `prompt=${encodeURIComponent(prompt)}`
+                });
+                
+                const result = await response.json();
+                
+                if (result.preview_url) {
+                    document.getElementById('preview-iframe').src = result.preview_url;
+                    document.getElementById('open-new-tab').href = result.preview_url;
+                    document.getElementById('preview-container').style.display = 'block';
+                    
+                    // Scroll to preview
+                    document.getElementById('preview-container').scrollIntoView({ 
+                        behavior: 'smooth' 
+                    });
+                } else {
+                    showError(result.error || 'An unknown error occurred.');
+                }
+            } catch (error) {
+                showError('Network error. Please check your connection and try again.');
+            } finally {
+                // Reset button state
+                generateBtn.disabled = false;
+                btnText.style.display = 'inline';
+                loadingSpinner.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('refine-btn').addEventListener('click', function() {
+            const promptInput = document.querySelector('.prompt-input');
+            const refineContainer = document.getElementById('refine-container');
+            
+            // Show/hide refine section
+            if (refineContainer && refineContainer.style.display === 'none') {
+                refineContainer.style.display = 'block';
+                this.textContent = '✨ Hide Refine';
+            } else {
+                // If no refine container, just focus on main input for refinement
+                promptInput.focus();
+                promptInput.placeholder = 'Enter refinements like "make it more modern", "change colors to blue", "add a contact form"...';
+                promptInput.value = ''; // Clear for refinement input
+                
+                // Scroll to input
+                promptInput.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
