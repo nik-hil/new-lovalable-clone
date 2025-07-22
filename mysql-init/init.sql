@@ -17,5 +17,3 @@ CREATE TABLE IF NOT EXISTS prompt_history (
 );
 
 -- Insert sample data
-INSERT INTO websites (prompt, files_generated) VALUES 
-('Sample website for testing', '["index.html", "style.css"]');

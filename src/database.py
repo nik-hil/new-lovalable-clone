@@ -7,8 +7,8 @@ from typing import List, Dict, Optional
 class DatabaseManager:
     def __init__(self):
         self.host = 'mysql'  # Docker service name
-        self.user = 'lovable_user'
-        self.password = 'lovable_password'
+        self.user = 'root'  # Use root for now
+        self.password = 'rootpassword'
         self.database = 'lovable_db'
         self.port = 3306
         

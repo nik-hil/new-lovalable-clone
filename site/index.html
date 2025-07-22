@@ -49,47 +49,118 @@
         let currentWebsiteId = null;
 
         // Load existing data when page loads
-        document.addEventListener('DOMContentLoaded', async function() {
-            await loadExistingData();
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load existing project data
+            loadExistingData();
+            
+            // Setup real-time synchronization
+            setupRealTimeSync();
+            
+            // Handle the new project button
+            const newProjectBtn = document.getElementById('newProjectBtn');
+            if (newProjectBtn) {
+                newProjectBtn.addEventListener('click', function() {
+                    fetch('/api/reset', {method: 'POST'})
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Clear history display
+                                const historySection = document.getElementById('history-section');
+                                if (historySection) {
+                                    historySection.remove();
+                                }
+                                // Clear localStorage
+                                localStorage.removeItem('promptHistory');
+                                localStorage.setItem('lastHistoryUpdate', Date.now().toString());
+                                alert('Started new project! Previous history cleared.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error starting new project:', error);
+                            alert('Error starting new project');
+                        });
+                });
+            }
+
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const formData = new FormData(form);
+                    const prompt = formData.get('prompt');
+                    if (prompt) {
+                        // Update localStorage for real-time sync
+                        updateHistoryInStorage(prompt);
+                    }
+                });
+            }
         });
 
-        async function loadExistingData() {
-            try {
-                const response = await fetch('/api/history');
-                const data = await response.json();
-                
-                if (data.website && data.history.length > 0) {
-                    currentWebsiteId = data.website.id;
-                    
-                    // Load history
-                    promptHistory = data.history.map(h => ({
-                        text: h.text,
-                        timestamp: new Date(h.timestamp).toLocaleString(),
-                        type: h.type
-                    }));
-                    updateHistoryDisplay();
-                    
-                    // Check if there are generated files and show preview
-                    if (data.website.files && data.website.files.length > 0) {
-                        const mainFile = data.website.files.find(f => f.endsWith('.html'));
-                        if (mainFile) {
-                            currentPreviewUrl = `/output/${mainFile}`;
-                            document.getElementById('preview-iframe').src = currentPreviewUrl;
-                            
-                            const newTabUrl = `${window.location.origin}/output/${mainFile}`;
-                            document.getElementById('open-new-tab').href = newTabUrl;
-                            
-                            document.getElementById('preview-container').style.display = 'block';
-                            
-                            // Update placeholder for refinements
-                            const promptInput = document.getElementById('prompt-input');
-                            promptInput.placeholder = 'Elevate your creation — "embrace minimalism", "amplify visual impact", "integrate seamless interactions"...';
+        function loadExistingData() {
+            fetch('/api/history')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Loaded history:', data);
+                    if (data.success && data.history.length > 0) {
+                        // Update UI with existing data
+                        const historyHtml = data.history.map(item => 
+                            `<div class="history-item">
+                                <strong>${new Date(item.created_at).toLocaleString()}:</strong> 
+                                ${item.prompt} (${item.prompt_type})
+                            </div>`
+                        ).join('');
+                        
+                        // Add a history section if it doesn't exist
+                        let historySection = document.getElementById('history-section');
+                        if (!historySection) {
+                            historySection = document.createElement('div');
+                            historySection.id = 'history-section';
+                            historySection.innerHTML = '<h3>Prompt History</h3><div id="history-content"></div>';
+                            document.body.appendChild(historySection);
                         }
+                        document.getElementById('history-content').innerHTML = historyHtml;
+                        
+                        // Store in localStorage for real-time sync
+                        localStorage.setItem('promptHistory', JSON.stringify(data.history));
+                        localStorage.setItem('lastHistoryUpdate', Date.now().toString());
                     }
+                })
+                .catch(error => console.error('Error loading history:', error));
+        }
+        
+        // Real-time sync between tabs
+        function setupRealTimeSync() {
+            // Listen for storage changes from other tabs
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'lastHistoryUpdate') {
+                    console.log('History updated in another tab, refreshing...');
+                    loadExistingData();
                 }
-            } catch (error) {
-                console.error('Error loading existing data:', error);
+            });
+            
+            // Periodically check for updates (fallback)
+            setInterval(loadExistingData, 10000); // Check every 10 seconds
+        }
+        
+        // Update localStorage when new prompt is submitted
+        function updateHistoryInStorage(prompt) {
+            const timestamp = new Date().toISOString();
+            const newItem = {
+                prompt: prompt,
+                prompt_type: 'refinement',
+                created_at: timestamp
+            };
+            
+            let history = [];
+            try {
+                const stored = localStorage.getItem('promptHistory');
+                if (stored) history = JSON.parse(stored);
+            } catch (e) {
+                console.error('Error parsing stored history:', e);
             }
+            
+            history.unshift(newItem);
+            localStorage.setItem('promptHistory', JSON.stringify(history));
+            localStorage.setItem('lastHistoryUpdate', Date.now().toString());
         }
 
         document.getElementById('prompt-form').addEventListener('submit', async function(event) {

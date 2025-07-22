@@ -42,16 +42,24 @@ def generate():
             files_generated = result.get("files", [])
             
             # Determine if this is a new website or refinement
-            if current_website_id is None:
-                # New website
-                website_id = db.create_website(prompt, files_generated)
-                if website_id:
-                    current_website_id = website_id
-                    db.add_prompt_history(website_id, prompt, 'initial')
-            else:
-                # Refinement of existing website
-                db.update_website_files(current_website_id, files_generated)
-                db.add_prompt_history(current_website_id, prompt, 'refinement')
+            try:
+                if current_website_id is None:
+                    # New website
+                    website_id = db.create_website(prompt, files_generated)
+                    if website_id:
+                        current_website_id = website_id
+                        success = db.add_prompt_history(website_id, prompt, 'initial')
+                        print(f"Database save - New website ID: {website_id}, History saved: {success}")
+                    else:
+                        print("Failed to create website in database")
+                else:
+                    # Refinement of existing website
+                    success = db.update_website_files(current_website_id, files_generated)
+                    history_success = db.add_prompt_history(current_website_id, prompt, 'refinement')
+                    print(f"Database save - Updated website ID: {current_website_id}, Files: {success}, History: {history_success}")
+            except Exception as e:
+                print(f"Database error: {e}")
+                # Continue even if database fails
             
             preview_url = f"/output/{main_file}"
             # Create the full URL for the new tab - this was the issue!
@@ -69,6 +77,15 @@ def generate():
         app.logger.error(f"Error in generate endpoint: {str(e)}")
         return jsonify({"error": "An unexpected error occurred. Please try again."}), 500
 
+@app.route('/api/health')
+def health_check():
+    try:
+        # Test database connection
+        db.get_connection()
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": f"error: {str(e)}"}, 500
+
 @app.route('/api/history')
 def get_history():
     """Get prompt history and latest website data"""
@@ -79,6 +96,7 @@ def get_history():
             current_website_id = latest_website['id']
             
             return jsonify({
+                "success": True,
                 "website": {
                     "id": latest_website['id'],
                     "files": latest_website['files_generated'],
@@ -86,18 +104,18 @@ def get_history():
                 },
                 "history": [
                     {
-                        "text": h['prompt_text'],
-                        "type": h['prompt_type'],
-                        "timestamp": h['created_at'].isoformat()
+                        "prompt": h['prompt_text'],
+                        "prompt_type": h['prompt_type'],
+                        "created_at": h['created_at'].isoformat()
                     }
                     for h in latest_website['history']
                 ]
             })
         else:
-            return jsonify({"website": None, "history": []})
+            return jsonify({"success": True, "website": None, "history": []})
     except Exception as e:
         print(f"Error getting history: {e}")
-        return jsonify({"website": None, "history": []})
+        return jsonify({"success": False, "website": None, "history": [], "error": str(e)})
 
 @app.route('/api/reset')
 def reset_session():
