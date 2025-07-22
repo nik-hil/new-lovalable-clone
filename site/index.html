@@ -23,7 +23,10 @@
         </div>
         
         <div id="prompt-history" style="display: none;">
-            <h3>Creative History</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3>Creative History</h3>
+                <button id="new-website-btn" class="secondary-button" style="font-size: 0.9em;">Start New Project</button>
+            </div>
             <div id="history-list" class="history-container"></div>
         </div>
         
@@ -43,6 +46,51 @@
     <script>
         let currentPreviewUrl = '';
         let promptHistory = [];
+        let currentWebsiteId = null;
+
+        // Load existing data when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadExistingData();
+        });
+
+        async function loadExistingData() {
+            try {
+                const response = await fetch('/api/history');
+                const data = await response.json();
+                
+                if (data.website && data.history.length > 0) {
+                    currentWebsiteId = data.website.id;
+                    
+                    // Load history
+                    promptHistory = data.history.map(h => ({
+                        text: h.text,
+                        timestamp: new Date(h.timestamp).toLocaleString(),
+                        type: h.type
+                    }));
+                    updateHistoryDisplay();
+                    
+                    // Check if there are generated files and show preview
+                    if (data.website.files && data.website.files.length > 0) {
+                        const mainFile = data.website.files.find(f => f.endsWith('.html'));
+                        if (mainFile) {
+                            currentPreviewUrl = `/output/${mainFile}`;
+                            document.getElementById('preview-iframe').src = currentPreviewUrl;
+                            
+                            const newTabUrl = `${window.location.origin}/output/${mainFile}`;
+                            document.getElementById('open-new-tab').href = newTabUrl;
+                            
+                            document.getElementById('preview-container').style.display = 'block';
+                            
+                            // Update placeholder for refinements
+                            const promptInput = document.getElementById('prompt-input');
+                            promptInput.placeholder = 'Elevate your creation — "embrace minimalism", "amplify visual impact", "integrate seamless interactions"...';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading existing data:', error);
+            }
+        }
 
         document.getElementById('prompt-form').addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -153,6 +201,33 @@
                 }
             } catch (error) {
                 showError('Connection interrupted. Please reconnect and continue creating.');
+            }
+        });
+        
+        // New Website button event listener
+        document.getElementById('new-website-btn').addEventListener('click', async function() {
+            try {
+                await fetch('/api/reset');
+                
+                // Reset client state
+                currentPreviewUrl = '';
+                promptHistory = [];
+                currentWebsiteId = null;
+                
+                // Hide preview and history
+                document.getElementById('preview-container').style.display = 'none';
+                document.getElementById('prompt-history').style.display = 'none';
+                
+                // Reset input
+                const promptInput = document.getElementById('prompt-input');
+                promptInput.value = '';
+                promptInput.placeholder = 'Describe your vision — a revolutionary fintech platform, an immersive portfolio experience, or a premium e-commerce destination';
+                
+                // Clear any error messages
+                document.getElementById('error-message').style.display = 'none';
+                
+            } catch (error) {
+                console.error('Error resetting session:', error);
             }
         });
         

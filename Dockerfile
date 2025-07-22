@@ -29,4 +29,5 @@ ENV FLASK_ENV=development
 ENV FLASK_DEBUG=1
 
 # Run the application
-CMD ["python", "src/server.py"]
+# CMD ["python", "src/server.py"]
+CMD ["sleep", "infinity"]

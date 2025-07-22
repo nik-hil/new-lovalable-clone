@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, send_from_directory, jsonify, send_file
 from main import create_website
+from database import DatabaseManager
 import os
 import re
 import zipfile
@@ -8,12 +9,17 @@ from io import BytesIO
 
 app = Flask(__name__, template_folder='../site', static_folder=None)
 
+# Initialize database manager
+db = DatabaseManager()
+current_website_id = None
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/generate', methods=['POST'])
 def generate():
+    global current_website_id
     try:
         prompt = request.form.get('prompt', '').strip()
         
@@ -32,6 +38,21 @@ def generate():
         main_file = next((f for f in result.get("files", []) if f.endswith('.html')), None)
 
         if main_file:
+            # Save to database
+            files_generated = result.get("files", [])
+            
+            # Determine if this is a new website or refinement
+            if current_website_id is None:
+                # New website
+                website_id = db.create_website(prompt, files_generated)
+                if website_id:
+                    current_website_id = website_id
+                    db.add_prompt_history(website_id, prompt, 'initial')
+            else:
+                # Refinement of existing website
+                db.update_website_files(current_website_id, files_generated)
+                db.add_prompt_history(current_website_id, prompt, 'refinement')
+            
             preview_url = f"/output/{main_file}"
             # Create the full URL for the new tab - this was the issue!
             new_tab_url = f"{request.url_root}output/{main_file}"
@@ -48,11 +69,48 @@ def generate():
         app.logger.error(f"Error in generate endpoint: {str(e)}")
         return jsonify({"error": "An unexpected error occurred. Please try again."}), 500
 
+@app.route('/api/history')
+def get_history():
+    """Get prompt history and latest website data"""
+    try:
+        latest_website = db.get_latest_website()
+        if latest_website:
+            global current_website_id
+            current_website_id = latest_website['id']
+            
+            return jsonify({
+                "website": {
+                    "id": latest_website['id'],
+                    "files": latest_website['files_generated'],
+                    "created_at": latest_website['created_at'].isoformat()
+                },
+                "history": [
+                    {
+                        "text": h['prompt_text'],
+                        "type": h['prompt_type'],
+                        "timestamp": h['created_at'].isoformat()
+                    }
+                    for h in latest_website['history']
+                ]
+            })
+        else:
+            return jsonify({"website": None, "history": []})
+    except Exception as e:
+        print(f"Error getting history: {e}")
+        return jsonify({"website": None, "history": []})
+
+@app.route('/api/reset')
+def reset_session():
+    """Reset current session to start a new website"""
+    global current_website_id
+    current_website_id = None
+    return jsonify({"status": "reset"})
+
 @app.route('/download-zip')
 def download_zip():
     """Generate and download a ZIP file containing all generated website files."""
     try:
-        output_dir = 'output'
+        output_dir = '../output'
         
         if not os.path.exists(output_dir) or not os.listdir(output_dir):
             return jsonify({"error": "No website files found. Please generate a website first."}), 404
