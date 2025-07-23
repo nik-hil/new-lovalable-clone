@@ -13,6 +13,35 @@ app = Flask(__name__, template_folder='../site', static_folder=None)
 db = DatabaseManager()
 current_website_id = None
 
+def setup_generated_database(schema_filename):
+    """Setup database tables from generated schema.sql file"""
+    try:
+        schema_path = os.path.join('../output', schema_filename)
+        if os.path.exists(schema_path):
+            with open(schema_path, 'r') as f:
+                schema_content = f.read()
+            
+            # Execute schema using the existing database connection
+            connection = db.get_connection()
+            if connection:
+                try:
+                    with connection.cursor() as cursor:
+                        # Split and execute each statement
+                        statements = schema_content.split(';')
+                        for statement in statements:
+                            statement = statement.strip()
+                            if statement:
+                                cursor.execute(statement)
+                    connection.commit()
+                    print("Database schema executed successfully")
+                except Exception as e:
+                    print(f"Error executing schema: {e}")
+                    connection.rollback()
+                finally:
+                    connection.close()
+    except Exception as e:
+        print(f"Error setting up database: {e}")
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -36,14 +65,33 @@ def generate():
 
         # Find the main HTML file in the list of generated files
         main_file = next((f for f in result.get("files", []) if f.endswith('.html')), None)
-
+        
+        # Check if this is a full-stack application with backend
+        has_backend = any(f.endswith(('.py', '.sql')) and f != '__init__.py' for f in result.get("files", []))
+        
         if main_file:
             # Save to database
             files_generated = result.get("files", [])
             
+            # If it has backend files, create database structure
+            if has_backend:
+                try:
+                    schema_file = next((f for f in files_generated if f == 'schema.sql'), None)
+                    if schema_file:
+                        # Execute the schema to create tables
+                        setup_generated_database(schema_file)
+                except Exception as e:
+                    print(f"Warning: Could not set up database schema: {e}")
+            
             # Determine if this is a new website or refinement
             try:
-                if current_website_id is None:
+                # Check if output folder is empty (new project) or if no current website ID
+                output_dir = '../output'
+                is_new_project = (current_website_id is None or 
+                                not os.path.exists(output_dir) or 
+                                len(os.listdir(output_dir)) == 0)
+                
+                if is_new_project:
                     # New website
                     website_id = db.create_website(prompt, files_generated)
                     if website_id:
@@ -117,12 +165,79 @@ def get_history():
         print(f"Error getting history: {e}")
         return jsonify({"success": False, "website": None, "history": [], "error": str(e)})
 
+@app.route('/api/backend/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def proxy_to_backend(path):
+    """Proxy requests to generated backend applications"""
+    try:
+        # Check if there's an app.py file in the output directory
+        app_py_path = os.path.join('../output', 'app.py')
+        if not os.path.exists(app_py_path):
+            return jsonify({"error": "No backend application found"}), 404
+        
+        # For now, we'll return a message indicating the backend feature
+        # In a full implementation, you'd run the generated Flask app in a separate process
+        return jsonify({
+            "message": "Backend proxy endpoint - would handle " + path,
+            "method": request.method,
+            "data": request.get_json() if request.is_json else request.form.to_dict()
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/reset')
 def reset_session():
     """Reset current session to start a new website"""
     global current_website_id
     current_website_id = None
     return jsonify({"status": "reset"})
+
+@app.route('/api/clear-all', methods=['POST'])
+def clear_all():
+    """Clear all files and database data"""
+    try:
+        global current_website_id
+        current_website_id = None
+        
+        # Clear output folder
+        output_dir = os.path.abspath('../output')
+        if not os.path.exists(output_dir):
+            # Try alternative path
+            output_dir = os.path.abspath('output')
+        
+        if os.path.exists(output_dir):
+            for filename in os.listdir(output_dir):
+                file_path = os.path.join(output_dir, filename)
+                if os.path.isfile(file_path):
+                    try:
+                        os.remove(file_path)
+                        print(f"Removed file: {file_path}")
+                    except Exception as e:
+                        print(f"Error removing file {file_path}: {e}")
+        else:
+            print(f"Output directory not found: {output_dir}")
+        
+        # Clear database tables
+        connection = db.get_connection()
+        if connection:
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("DELETE FROM prompt_history")
+                    cursor.execute("DELETE FROM websites")
+                connection.commit()
+                print("Database cleared successfully")
+                return jsonify({"success": True, "message": "All data cleared successfully"})
+            except Exception as e:
+                print(f"Error clearing database: {e}")
+                connection.rollback()
+                return jsonify({"success": False, "error": f"Database error: {str(e)}"})
+            finally:
+                connection.close()
+        else:
+            return jsonify({"success": False, "error": "Could not connect to database"})
+            
+    except Exception as e:
+        print(f"Error clearing data: {e}")
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route('/download-zip')
 def download_zip():

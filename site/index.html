@@ -19,13 +19,13 @@
         </form>
         
         <div class="usage-tip" style="margin-top: 15px; padding: 12px; background-color: #f0f8ff; border-radius: 6px; font-size: 0.9em; color: #0066cc;">
-            ✨ <strong>Pro tip:</strong> Refine your creation effortlessly. Simply describe what you envision — "elevate the aesthetics", "embrace minimalism", or "integrate advanced functionality"
+            ✨ <strong>Pro tip:</strong> Create full-stack applications! For data-driven sites (e.g., "flower shop with orders", "blog with posts", "booking system"), I'll generate complete Flask backends with MySQL databases. For refinements, simply describe your vision — "elevate the aesthetics", "embrace minimalism", or "add new features"
         </div>
         
         <div id="prompt-history" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3>Creative History</h3>
-                <button id="new-website-btn" class="secondary-button" style="font-size: 0.9em;">Start New Project</button>
+                <button id="new-website-btn" class="secondary-button" style="font-size: 0.9em;">🗑️ Clear All & Start New</button>
             </div>
             <div id="history-list" class="history-container"></div>
         </div>
@@ -207,6 +207,30 @@
                     
                     document.getElementById('preview-container').style.display = 'block';
                     
+                    // Show information about generated files
+                    if (result.files_generated) {
+                        const hasBackend = result.files_generated.some(file => 
+                            file.endsWith('.py') || file.endsWith('.sql')
+                        );
+                        
+                        if (hasBackend) {
+                            // Add a small notice for full-stack applications
+                            const existingNotice = document.getElementById('backend-notice');
+                            if (existingNotice) existingNotice.remove();
+                            
+                            const notice = document.createElement('div');
+                            notice.id = 'backend-notice';
+                            notice.innerHTML = `
+                                <div style="background-color: #e8f5e8; border: 1px solid #4caf50; border-radius: 6px; padding: 10px; margin: 10px 0; font-size: 0.9em; color: #2e7d32;">
+                                    🚀 <strong>Full-stack application generated!</strong> 
+                                    Created ${result.files_generated.length} files including backend API and database schema.
+                                    <br><small>Files: ${result.files_generated.join(', ')}</small>
+                                </div>
+                            `;
+                            document.getElementById('preview-container').appendChild(notice);
+                        }
+                    }
+                    
                     // Clear the text area for next prompt
                     event.target.prompt.value = '';
                     event.target.prompt.placeholder = 'Elevate your creation — "embrace minimalism", "amplify visual impact", "integrate seamless interactions"...';
@@ -277,28 +301,48 @@
         
         // New Website button event listener
         document.getElementById('new-website-btn').addEventListener('click', async function() {
+            if (!confirm('This will clear all generated files and start a new project. Are you sure?')) {
+                return;
+            }
+            
             try {
-                await fetch('/api/reset');
+                // Call the clear-all endpoint to properly clear everything
+                const response = await fetch('/api/clear-all', {
+                    method: 'POST'
+                });
                 
-                // Reset client state
-                currentPreviewUrl = '';
-                promptHistory = [];
-                currentWebsiteId = null;
+                const result = await response.json();
                 
-                // Hide preview and history
-                document.getElementById('preview-container').style.display = 'none';
-                document.getElementById('prompt-history').style.display = 'none';
-                
-                // Reset input
-                const promptInput = document.getElementById('prompt-input');
-                promptInput.value = '';
-                promptInput.placeholder = 'Describe your vision — a revolutionary fintech platform, an immersive portfolio experience, or a premium e-commerce destination';
-                
-                // Clear any error messages
-                document.getElementById('error-message').style.display = 'none';
+                if (result.success) {
+                    // Reset client state
+                    currentPreviewUrl = '';
+                    promptHistory = [];
+                    currentWebsiteId = null;
+                    
+                    // Hide preview and history
+                    document.getElementById('preview-container').style.display = 'none';
+                    document.getElementById('prompt-history').style.display = 'none';
+                    
+                    // Reset input
+                    const promptInput = document.getElementById('prompt-input');
+                    promptInput.value = '';
+                    promptInput.placeholder = 'Describe your vision — a revolutionary fintech platform, an immersive portfolio experience, or a premium e-commerce destination';
+                    
+                    // Clear any error messages
+                    document.getElementById('error-message').style.display = 'none';
+                    
+                    // Clear localStorage
+                    localStorage.removeItem('promptHistory');
+                    localStorage.setItem('lastHistoryUpdate', Date.now().toString());
+                    
+                    alert('✅ Project cleared successfully! All files and data removed.');
+                } else {
+                    alert('❌ Error clearing project: ' + (result.error || 'Unknown error'));
+                }
                 
             } catch (error) {
-                console.error('Error resetting session:', error);
+                console.error('Error clearing project:', error);
+                alert('❌ Error clearing project: ' + error.message);
             }
         });
         

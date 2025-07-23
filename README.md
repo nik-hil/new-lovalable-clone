@@ -1,199 +1,321 @@
-# Lovable Clone with Gemini AI
+# Lovable Clone - AI Website Generator
 
-A web application that creates websites from natural language prompts using Google's Gemini AI, similar to Lovable.
+A powerful AI-driven website generator that creates complete full-stack web applications using Gemini AI. Simply describe your vision, and watch as beautiful, functional websites come to life with backend APIs, databases, and modern frontend designs.
 
-## Features
+## 🌟 Features
 
-- 🚀 Generate complete websites from simple text prompts
-- 🔄 Iterative refinement - continue improving your website with additional prompts
-- 👀 Live preview within the app using iframes  
-- 🌐 Open generated websites in new tabs
-- 💾 Download websites as ZIP files
-- 📝 Prompt history tracking with timestamps
-- 💅 Clean, responsive UI with loading states and spinning animations
-- 📱 Mobile-friendly design
-- 🐳 Docker development environment
+### 🤖 **Smart AI Generation**
+- **Intelligent Backend Detection**: Automatically identifies when your prompt needs backend functionality
+- **Full-Stack Applications**: Generates complete Flask APIs with MySQL databases for data-driven sites
+- **Modern Frontend Design**: Creates responsive, beautiful websites with contemporary styling
+- **Iterative Generation**: Uses validation loops to ensure all required files are generated
 
-## Setup
+### 🎯 **Website Types Supported**
+- **E-commerce Sites**: Product catalogs, shopping carts, order management
+- **Business Websites**: Service listings, contact forms, appointment booking
+- **Content Management**: Blogs, news sites, portfolio galleries
+- **User Systems**: Registration, authentication, user dashboards
+- **Static Sites**: Landing pages, brochures, informational sites
 
-### Docker Development Setup (Recommended)
+### 🔧 **Generated Files**
+- `index.html` - Responsive frontend with modern design
+- `style.css` - Beautiful styling with animations and effects
+- `script.js` - Interactive JavaScript features
+- `app.py` - Complete Flask backend with RESTful APIs
+- `database.py` - MySQL connection and helper functions
+- `schema.sql` - Database schema and sample data
+- `.env.example` - Environment configuration template
 
-1. Set up your Google Gemini API key:
-   - Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-   - Create a `.env` file in the root directory:
-     ```
-     GOOGLE_API_KEY=your_api_key_here
-     ```
+### 🚀 **Advanced Features**
+- **Real-time Preview**: Instant preview with iframe and new tab options
+- **Project History**: Track all prompts and iterations
+- **File Validation**: Ensures all required files are generated
+- **Error Handling**: Comprehensive error reporting and recovery
+- **ZIP Export**: Download complete projects as ZIP files
+- **Database Integration**: Automatic schema execution and table creation
 
-2. Use the Docker helper script:
+## 🛠️ Installation & Setup
+
+### Prerequisites
+- Docker and Docker Compose
+- Gemini AI API key
+
+### Quick Start
+
+1. **Clone the repository**
    ```bash
-   # Build the containers
-   ./docker-dev.sh build
-   
-   # Start the development environment
+   git clone <repository-url>
+   cd new-lovalable-clone
+   ```
+
+2. **Set up environment variables**
+   ```bash
+   cp env.example .env
+   # Edit .env and add your Gemini API key:
+   GEMINI_API_KEY=your_actual_api_key_here
+   ```
+
+3. **Start the development environment**
+   ```bash
    ./docker-dev.sh up
-   
-   # Stop the environment
-   ./docker-dev.sh down
-   
-   # View logs
-   ./docker-dev.sh logs
    ```
 
-3. Access the application:
-   - **Lovable Clone**: http://localhost:5001
+4. **Access the application**
+   - Website: http://localhost:5001
+   - MySQL: localhost:3306
 
-### Manual Setup (Alternative)
-
-1. Install the required Python packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Set up your Google Gemini API key:
-   - Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-   - Set it as an environment variable:
-     ```bash
-     export GOOGLE_API_KEY="your_api_key_here"
-     ```
-   - Or create a `.env` file in the root directory:
-     ```
-     GOOGLE_API_KEY=your_api_key_here
-     ```
-
-3. Run the application:
-   ```bash
-   cd src
-   python server.py
-   ```
-
-4. Open your browser and go to `http://localhost:5001`
-
-## Usage
-
-### Initial Generation
-1. **Generate a website:** Enter a descriptive prompt like:
-   - "create a personal blog website for cars. I visit different cars and post photos and some details about them"
-   - "build a portfolio website for a photographer"
-   - "make a landing page for a coffee shop with warm colors"
-
-2. **Preview:** See your website in the preview iframe immediately
-3. **History:** Your prompt is automatically added to the history section (non-editable)
-4. **Clean slate:** The text area is cleared for your next prompt
-5. **Loading animation:** Watch the spinning hourglass ⏳ while your website is being generated
-
-### Refinement Process
-6. **Refine:** Click "Refine Further" and enter modification requests like:
-   - "make it more modern with better colors"
-   - "change the background to blue"
-   - "add a contact form"
-   - "make the typography more elegant"
-
-7. **Important:** For refinements, you **don't need to repeat the original prompt**. Just describe what you want to change:
-   - ✅ Good: "make it more modern"
-   - ❌ Avoid: "create a personal blog website for cars... make it more modern" (too long and repetitive)
-
-### Export & Share
-8. **Download:** Click "Download ZIP" to get all website files in a ZIP archive
-9. **Open in new tab:** Click the "Open in New Tab" button to view the full website
-
-### Pro Tips for Better Results
-- **Be specific but concise** in refinements
-- **Use design terminology**: "modern", "clean", "professional", "vibrant"
-- **Request specific changes**: "darker header", "larger fonts", "rounded corners"
-- **Ask for features**: "contact form", "gallery", "navigation menu"
-- **Check history** to see what prompts you've used before
-
-## Technology Stack
-
-- **Backend**: Python Flask with Google Gemini AI integration
-- **AI Model**: Google Gemini 1.5 Flash for website generation
-- **Frontend**: HTML/CSS/JavaScript with responsive design and animations
-- **Infrastructure**: Docker containerization with volume mounting
-- **Features**: ZIP file generation, prompt history, live preview, spinning loading animations
-
-## Development
-
-### Project Structure
-
-```
-├── src/
-│   ├── server.py          # Main Flask application (moved from root)
-│   └── main.py            # AI processing and response parsing
-├── site/                  # Frontend files
-│   ├── index.html         # Main interface with spinning animations
-│   └── style.css          # Responsive styling with CSS animations
-├── output/                # Generated website files
-├── tests/                 # Test files
-├── docker-compose.yml     # Docker services configuration
-├── Dockerfile             # Container build instructions
-├── docker-dev.sh          # Development helper script
-└── requirements.txt       # Python dependencies
-```
-
-### Recent Updates
-
-**✅ File Structure Reorganization:**
-- Moved `server.py` from root to `src/` folder for better organization
-- Updated Dockerfile and all imports accordingly
-- Tests and other files updated to reflect new structure
-
-**✅ UI/UX Improvements:**
-- Added spinning animation to hourglass (⏳) loading indicator
-- CSS keyframe animations provide visual feedback during generation
-- Improved user experience with clear loading states
-
-**✅ Docker Simplification:**
-- Removed phpMyAdmin dependency (was only needed for database administration)
-- Streamlined docker-compose.yml for simpler deployment
-- Focus on core functionality without unnecessary database tools
-
-### Docker Commands
+### Development Commands
 
 ```bash
-# Start all services
-./docker-dev.sh up
-
 # Build containers
 ./docker-dev.sh build
 
-# Stop services
-./docker-dev.sh down
+# Start services
+./docker-dev.sh up
 
 # View logs
 ./docker-dev.sh logs
 
-# Check status
-docker-compose ps
+# Open shell in web container
+./docker-dev.sh shell
+
+# Access MySQL shell
+./docker-dev.sh mysql
+
+# Restart web container
+./docker-dev.sh restart
+
+# Clean up everything
+./docker-dev.sh clean
 ```
 
-## Environment Variables
+## 🎨 Usage Examples
 
-Create a `.env` file with:
+### Example Prompts
 
-```env
-GOOGLE_API_KEY=your_google_api_key_here
-FLASK_ENV=development
+**E-commerce Store:**
 ```
+"Create a flower shop where customers can browse flowers and place orders"
+```
+*Generates: Product catalog, shopping cart, order management system, admin dashboard*
 
-## Running Tests
+**Business Website:**
+```
+"Build a restaurant website with online menu and reservation system"
+```
+*Generates: Menu display, reservation booking, contact forms, location info*
 
+**Content Platform:**
+```
+"Make a blog website for tech reviews with user comments"
+```
+*Generates: Article management, comment system, user authentication, admin panel*
+
+**Service Business:**
+```
+"Create a photography portfolio with client booking system"
+```
+*Generates: Gallery display, booking calendar, client management, contact forms*
+
+### Website Refinement
+
+After generating a website, you can refine it with additional prompts:
+- "Make it more modern and minimalist"
+- "Add a dark mode toggle"
+- "Improve the mobile design"
+- "Add more interactive animations"
+
+## 🏗️ Architecture
+
+### Frontend (Landing Page)
+- **Framework**: Vanilla HTML/CSS/JavaScript
+- **Styling**: Modern CSS with animations and responsive design
+- **Features**: Real-time preview, project history, file download
+
+### Backend (Generated Applications)
+- **Framework**: Flask (Python)
+- **Database**: MySQL 8.0
+- **APIs**: RESTful endpoints with CORS support
+- **Authentication**: Session-based (when needed)
+
+### Infrastructure
+- **Containerization**: Docker with Docker Compose
+- **Development**: Hot reload and live debugging
+- **Database**: Persistent MySQL with initialization scripts
+- **File Storage**: Local filesystem with volume mounting
+
+## 🧪 Testing
+
+### Run Tests
 ```bash
-# Run tests locally
-pytest tests/
+# Install test dependencies
+pip install pytest pytest-cov
 
-# Run tests in Docker
-docker-compose exec web pytest tests/
+# Run all tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=src --cov-report=html
 ```
 
-## Contributing
+### Test Categories
+- **Unit Tests**: Core functionality testing
+- **Integration Tests**: API endpoint testing
+- **File Generation Tests**: Validation of generated files
+- **Backend Detection Tests**: Smart prompt analysis
+- **Error Handling Tests**: Edge cases and error scenarios
+
+## 📁 Project Structure
+
+```
+new-lovalable-clone/
+├── src/                      # Core application code
+│   ├── main.py              # AI generation logic
+│   ├── server.py            # Flask web server
+│   └── database.py          # Database management
+├── site/                    # Landing page frontend
+│   ├── index.html           # Main interface
+│   └── style.css            # Landing page styles
+├── output/                  # Generated websites
+├── tests/                   # Test suite
+├── mysql-init/              # Database initialization
+├── docker-compose.yml       # Container orchestration
+├── Dockerfile              # Container definition
+├── requirements.txt         # Python dependencies
+└── docker-dev.sh           # Development scripts
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+```bash
+# Required
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Database (for generated applications)
+DB_HOST=mysql
+DB_USER=lovable_user
+DB_PASSWORD=lovable_password
+DB_NAME=lovable_db
+
+# Flask
+FLASK_ENV=development
+FLASK_DEBUG=1
+```
+
+### Database Configuration
+- **Host**: mysql (Docker service name)
+- **Port**: 3306
+- **Database**: lovable_db
+- **User**: lovable_user
+- **Password**: lovable_password
+
+## 🔍 API Reference
+
+### Main Endpoints
+
+#### Generate Website
+```http
+POST /generate
+Content-Type: application/x-www-form-urlencoded
+
+prompt=your_website_description
+```
+
+**Response:**
+```json
+{
+  "preview_url": "/output/index.html",
+  "new_tab_url": "http://localhost:5001/output/index.html",
+  "files_generated": ["index.html", "style.css", "app.py", "database.py", "schema.sql", "script.js", ".env.example"],
+  "message": "Successfully generated 7 files"
+}
+```
+
+#### Clear All Data
+```http
+POST /api/clear-all
+```
+
+#### Download Project
+```http
+GET /download-zip
+```
+
+#### Health Check
+```http
+GET /api/health
+```
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**Container won't start:**
+```bash
+# Check container status
+docker-compose ps
+
+# View logs
+./docker-dev.sh logs
+
+# Rebuild containers
+./docker-dev.sh clean && ./docker-dev.sh build && ./docker-dev.sh up
+```
+
+**API quota exceeded:**
+- Gemini API has rate limits
+- Wait for quota reset (usually 24 hours)
+- Check your API key and billing status
+
+**Database connection errors:**
+```bash
+# Restart MySQL container
+docker-compose restart mysql
+
+# Check MySQL logs
+docker-compose logs mysql
+```
+
+**Port conflicts:**
+```bash
+# Check what's using port 5001
+lsof -i :5001
+
+# Stop conflicting processes or change ports in docker-compose.yml
+```
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test with the Docker environment
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+### Development Guidelines
+- Follow PEP 8 for Python code
+- Add tests for new features
+- Update documentation
+- Use meaningful commit messages
 
-This project is open source and available under the [MIT License](LICENSE).
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Gemini AI** for powering the website generation
+- **Flask** for the robust web framework
+- **MySQL** for reliable data storage
+- **Docker** for containerization
+
+## 📞 Support
+
+- **Issues**: Report bugs and feature requests on GitHub Issues
+- **Documentation**: Check this README and inline code comments
+- **Community**: Join discussions in GitHub Discussions
+
+---
+
+**Built with ❤️ using AI and modern web technologies**
