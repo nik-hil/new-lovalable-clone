@@ -243,7 +243,11 @@ def clear_all():
 def download_zip():
     """Generate and download a ZIP file containing all generated website files."""
     try:
-        output_dir = '../output'
+        # Use absolute path to avoid path issues in different environments
+        if os.path.exists('/app/output'):
+            output_dir = '/app/output'  # Docker container path
+        else:
+            output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')  # Local development
         
         if not os.path.exists(output_dir) or not os.listdir(output_dir):
             return jsonify({"error": "No website files found. Please generate a website first."}), 404

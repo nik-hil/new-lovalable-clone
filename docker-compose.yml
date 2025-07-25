@@ -15,6 +15,18 @@ services:
       - app-network
     restart: unless-stopped
 
+  test-runner:
+    build: .
+    volumes:
+      - ./output:/app/output
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+    networks:
+      - app-network
+    command: tail -f /dev/null  # Keep container running for manual testing
+    restart: unless-stopped
+
   mysql:
     image: mysql:8.0
     container_name: lovable_mysql
