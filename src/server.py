@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, send_from_directory, jsonify, send_file
+from flask_cors import CORS
 from main import create_website
 from database import DatabaseManager
 import os
@@ -8,6 +9,9 @@ import tempfile
 from io import BytesIO
 
 app = Flask(__name__, template_folder='../site', static_folder=None)
+
+# Enable CORS for all routes
+CORS(app, origins=['http://localhost:8080', 'http://localhost:5001'])
 
 # Initialize database manager
 db = DatabaseManager()
@@ -44,7 +48,33 @@ def setup_generated_database(schema_filename):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Check if Vue.js frontend is built and available
+    vue_dist_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist', 'index.html')
+    if os.path.exists(vue_dist_path):
+        # Serve Vue.js production build
+        return send_from_directory(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist'), 'index.html')
+    else:
+        # Fallback: redirect to Vue.js dev server or serve static HTML
+        return '''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Lovable Clone - Vue.js</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1.0">
+        </head>
+        <body>
+            <div id="app">
+                <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+                    <h1>🚀 Vue.js Frontend Loading...</h1>
+                    <p>The Vue.js frontend is starting up. Please visit:</p>
+                    <a href="http://localhost:8080" style="font-size: 18px; color: #667eea;">http://localhost:8080</a>
+                    <p><small>If the link doesn't work, the Vue.js dev server might still be starting.</small></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        '''
 
 @app.route('/generate', methods=['POST'])
 def generate():
@@ -191,7 +221,8 @@ def reset_session():
     current_website_id = None
     return jsonify({"status": "reset"})
 
-@app.route('/api/clear-all', methods=['POST'])
+@app.route('/api/clear-all', methods=['POST'])  
+@app.route('/clear-all', methods=['POST'])
 def clear_all():
     """Clear all files and database data"""
     try:
@@ -240,6 +271,7 @@ def clear_all():
         return jsonify({"success": False, "error": str(e)})
 
 @app.route('/download-zip')
+@app.route('/api/download-zip')
 def download_zip():
     """Generate and download a ZIP file containing all generated website files."""
     try:
@@ -277,6 +309,20 @@ def download_zip():
 @app.route('/site/<path:path>')
 def serve_site(path):
     return send_from_directory('../site', path)
+
+@app.route('/frontend/<path:path>')
+def serve_frontend(path):
+    """Serve Vue.js frontend files"""
+    try:
+        # Try to serve from dist directory (production build)
+        dist_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
+        if os.path.exists(os.path.join(dist_path, path)):
+            return send_from_directory(dist_path, path)
+        else:
+            # Fallback to serve from src directory (development)
+            return send_from_directory('../frontend/src', path)
+    except FileNotFoundError:
+        return "Frontend file not found", 404
 
 @app.route('/output/<path:path>')
 def serve_output(path):

@@ -1,0 +1,29 @@
+{
+  "name": "lovable-clone-vue",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "serve": "cd frontend && vue-cli-service serve --port 8080",
+    "build": "cd frontend && vue-cli-service build",
+    "lint": "cd frontend && vue-cli-service lint"
+  },
+  "dependencies": {
+    "vue": "^3.3.0",
+    "@vue/cli-service": "^5.0.0",
+    "axios": "^1.6.0",
+    "vue-router": "^4.2.0",
+    "pinia": "^2.1.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-eslint": "^5.0.0",
+    "@vue/cli-plugin-router": "^5.0.0",
+    "@vue/eslint-config-standard": "^8.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-vue": "^9.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+} 

@@ -117,67 +117,11 @@ body {
     text-align: left;
 }
 
-#prompt-history {
-    margin-top: 20px;
-    text-align: left;
-}
 
-#prompt-history h3 {
-    color: #333;
-    margin-bottom: 15px;
-    font-size: 1.2em;
-}
-
-.history-container {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background-color: #f8f9fa;
-    padding: 10px;
-}
-
-.history-item {
-    display: flex;
-    padding: 10px;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 8px;
-    background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.history-item:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-.history-number {
-    font-weight: bold;
-    color: #007bff;
-    margin-right: 10px;
-    flex-shrink: 0;
-}
-
-.history-content {
-    flex: 1;
-}
-
-.history-text {
-    font-size: 0.9em;
-    color: #333;
-    line-height: 1.4;
-    margin-bottom: 5px;
-}
-
-.history-time {
-    font-size: 0.75em;
-    color: #666;
-    font-style: italic;
-}
 
 .spinner {
     animation: spin 1s linear infinite;
+    display: inline-block;
 }
 
 @keyframes spin {
@@ -243,15 +187,6 @@ body {
     #preview-iframe {
         height: 400px;
     }
-}
-
-.spinner {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
 }
 
 .secondary-button {
@@ -327,34 +262,3 @@ body {
     background-color: #007bff;
 }
 
-/* History Section Styles */
-#history-section {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 30px;
-    margin-top: 40px;
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-#history-section h3 {
-    color: #333;
-    margin-bottom: 20px;
-    font-size: 24px;
-    font-weight: 600;
-}
-
-.history-item {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 10px;
-    color: #333;
-    font-size: 14px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    text-align: left;
-}
-
-.history-item strong {
-    color: #007bff;
-}

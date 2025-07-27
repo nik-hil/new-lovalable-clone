@@ -1,18 +1,28 @@
-FROM python:3.9-slim
+FROM node:18-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install Python and system dependencies
 RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
     gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better Docker layer caching
-COPY requirements.txt .
+# Install Vue CLI globally
+RUN npm install -g @vue/cli @vue/cli-service
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy package.json for Node.js dependencies (we'll create this)
+COPY package*.json ./
+RUN npm install || echo "No package.json found, will install later"
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt --break-system-packages
 
 # Copy application code
 COPY . .
@@ -20,13 +30,14 @@ COPY . .
 # Create output directory
 RUN mkdir -p output
 
-# Expose port
-EXPOSE 5001
-
 # Set environment variables
+ENV PYTHONPATH=/app/src
 ENV FLASK_APP=src/server.py
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG=1
 
-# Run the application
-CMD ["python", "src/server.py"]
+# Expose ports
+EXPOSE 5001 8080 3000
+
+# Start both Flask and Vue dev servers
+CMD ["sh", "-c", "python3 src/server.py & (cd frontend && npm run serve 2>/dev/null || echo 'Vue frontend not ready yet') & wait"]

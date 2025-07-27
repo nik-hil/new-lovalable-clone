@@ -18,12 +18,13 @@ A powerful AI-driven website generator that creates complete full-stack web appl
 - **Static Sites**: Landing pages, brochures, informational sites
 
 ### 🔧 **Generated Files**
-- `index.html` - Responsive frontend with modern design
-- `style.css` - Beautiful styling with animations and effects
-- `script.js` - Interactive JavaScript features
-- `app.py` - Complete Flask backend with RESTful APIs
-- `database.py` - MySQL connection and helper functions
-- `schema.sql` - Database schema and sample data
+- `index.html` - Vue.js application structure
+- `App.vue` - Main Vue.js component with reactive features
+- `main.js` - Vue.js application initialization
+- `style.css` - Modern CSS with vibrant gradients and glassmorphism
+- `app.py` - Complete Flask backend with RESTful APIs (for full-stack apps)
+- `database.py` - MySQL connection and helper functions (for data-driven sites)
+- `schema.sql` - Database schema and sample data (for backend apps)
 - `.env.example` - Environment configuration template
 
 ### 🚀 **Advanced Features**
@@ -61,32 +62,37 @@ A powerful AI-driven website generator that creates complete full-stack web appl
    ```
 
 4. **Access the application**
-   - Website: http://localhost:5001
-   - MySQL: localhost:3306
+   - Vue.js Frontend: http://localhost:8080 (Main Interface)
+   - Flask Backend: http://localhost:5001 (API Server)
+   - Test Server: http://localhost:5002 (Generated Sites)
+   - MySQL: localhost:3306 (Database)
 
 ### Development Commands
 
 ```bash
-# Build containers
-./docker-dev.sh build
-
-# Start services
+# Start full development environment (recommended)
 ./docker-dev.sh up
 
-# View logs
-./docker-dev.sh logs
+# Start only Vue.js frontend
+./docker-dev.sh frontend
 
-# Open shell in web container
-./docker-dev.sh shell
+# Start only Flask backend  
+./docker-dev.sh backend
 
-# Access MySQL shell
-./docker-dev.sh mysql
+# Vue.js specific commands
+./docker-dev.sh vue dev      # Start Vue.js dev server
+./docker-dev.sh vue build    # Build for production
+./docker-dev.sh vue install  # Install dependencies
 
-# Restart web container
-./docker-dev.sh restart
-
-# Clean up everything
-./docker-dev.sh clean
+# Other commands
+./docker-dev.sh build        # Build Docker containers
+./docker-dev.sh logs         # View backend logs
+./docker-dev.sh logs frontend # View frontend logs
+./docker-dev.sh shell        # Open backend shell
+./docker-dev.sh shell frontend # Open frontend shell
+./docker-dev.sh test         # Run test suite
+./docker-dev.sh mysql        # Access MySQL shell
+./docker-dev.sh clean        # Clean up everything
 ```
 
 ## 🎨 Usage Examples
@@ -128,15 +134,18 @@ After generating a website, you can refine it with additional prompts:
 ## 🏗️ Architecture
 
 ### Frontend (Landing Page)
-- **Framework**: Vanilla HTML/CSS/JavaScript
-- **Styling**: Modern CSS with animations and responsive design
-- **Features**: Real-time preview, project history, file download
+- **Framework**: Vue.js 3 with Composition API
+- **Build Tool**: Vue CLI with Webpack
+- **Styling**: Modern CSS with glassmorphism, neumorphism, and vibrant gradients
+- **Features**: Real-time preview, reactive state management, modern animations
+- **Development**: Hot reload with proxy to Flask backend
 
-### Backend (Generated Applications)
-- **Framework**: Flask (Python)
+### Backend (API & Generated Applications)
+- **Framework**: Flask (Python) with CORS enabled
 - **Database**: MySQL 8.0
-- **APIs**: RESTful endpoints with CORS support
+- **APIs**: RESTful endpoints with proxy support for Vue.js frontend
 - **Authentication**: Session-based (when needed)
+- **Generated Sites**: Vue.js applications with modern aesthetics
 
 ### Infrastructure
 - **Containerization**: Docker with Docker Compose
@@ -170,19 +179,28 @@ pytest tests/ --cov=src --cov-report=html
 ```
 new-lovalable-clone/
 ├── src/                      # Core application code
-│   ├── main.py              # AI generation logic
-│   ├── server.py            # Flask web server
+│   ├── main.py              # AI generation logic (Vue.js focused)
+│   ├── server.py            # Flask API server with CORS
 │   └── database.py          # Database management
-├── site/                    # Landing page frontend
-│   ├── index.html           # Main interface
-│   └── style.css            # Landing page styles
-├── output/                  # Generated websites
-├── tests/                   # Test suite
+├── frontend/                # Vue.js frontend application
+│   ├── src/
+│   │   ├── App.vue          # Main Vue.js component
+│   │   ├── main.js          # Vue.js entry point
+│   │   ├── router/          # Vue Router configuration
+│   │   ├── views/           # Vue.js page components
+│   │   └── styles/          # Global CSS utilities
+│   ├── public/              # Static assets
+│   ├── package.json         # Node.js dependencies
+│   └── vue.config.js        # Vue.js configuration with proxy
+├── site/                    # Legacy HTML (fallback)
+├── output/                  # Generated Vue.js applications
+├── tests/                   # Test suite (updated for Vue.js)
 ├── mysql-init/              # Database initialization
-├── docker-compose.yml       # Container orchestration
-├── Dockerfile              # Container definition
-├── requirements.txt         # Python dependencies
-└── docker-dev.sh           # Development scripts
+├── docker-compose.yml       # Container orchestration (Node.js + Python)
+├── Dockerfile              # Container definition (Node.js base)
+├── requirements.txt         # Python dependencies (includes Flask-CORS)
+├── package.json             # Root Node.js configuration
+└── docker-dev.sh           # Development scripts (Vue.js commands)
 ```
 
 ## 🔧 Configuration

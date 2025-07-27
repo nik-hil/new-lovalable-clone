@@ -2,13 +2,17 @@ services:
   web:
     build: .
     ports:
-      - "5001:5001"
+      - "5001:5001"  # Flask backend
+      - "8080:8080"  # Vue.js frontend dev server
+      - "3000:3000"  # Generated Vue.js sites dev server
     volumes:
       - .:/app
       - /app/.venv  # Exclude virtual environment from volume mount
+      - /app/node_modules  # Exclude node_modules from volume mount
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
+      - NODE_ENV=development
     depends_on:
       - mysql
     networks:
@@ -19,12 +23,16 @@ services:
     build: .
     volumes:
       - ./output:/app/output
+      - ./tests:/app/tests
     working_dir: /app
     environment:
       - PYTHONPATH=/app
+      - FLASK_ENV=testing
     networks:
       - app-network
-    command: tail -f /dev/null  # Keep container running for manual testing
+    ports:
+      - "5002:5002"  # Separate port for testing generated sites
+    command: sh -c "cd /app/output && python3 -m http.server 5002 2>/dev/null || tail -f /dev/null"
     restart: unless-stopped
 
   mysql:

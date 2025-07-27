@@ -1,4 +1,3 @@
-
 import os
 import re
 import google.generativeai as genai
@@ -62,12 +61,16 @@ def validate_generated_files(files: dict, is_backend_required: bool) -> tuple[bo
     """
     missing_files = []
     
-    # Check for essential frontend files
+    # Check for essential frontend files (Vue.js or traditional)
     has_html = any('html' in filename.lower() for filename in files.keys())
+    has_vue = any('vue' in filename.lower() for filename in files.keys())
+    has_main_js = any('main.js' in filename for filename in files.keys())
     has_css = any('css' in filename.lower() for filename in files.keys())
     
     if not has_html:
         missing_files.append('HTML file')
+    if not has_vue and not has_main_js:
+        missing_files.append('Vue.js component (App.vue) or main.js')
     if not has_css:
         missing_files.append('CSS file')
     
@@ -160,102 +163,70 @@ The script MUST include:
 - Error handling and user feedback messages
 - Smooth scrolling and navigation
 - Dynamic content updates
+- Modern ES6+ features where appropriate
+- Mobile-responsive touch interactions
+- Accessibility enhancements
 
-Generate practical, working JavaScript code that enhances the user experience.
+Generate practical, working JavaScript code that enhances the user experience. Make it substantial (minimum 100+ lines) with proper functionality.
 
 Format your response as:
 **script.js:**
 ```javascript
-[Complete functional JavaScript code here - minimum 50 lines]
+[Complete functional JavaScript code here - minimum 100 lines with comprehensive features]
 ```
 """
                 response = model.generate_content(js_prompt)
                 files = parse_gemini_response(response.text)
-                if 'script.js' in files and len(files['script.js']) > 100:  # Ensure substantial content
+                if 'script.js' in files and len(files['script.js']) > 200:  # Ensure substantial content
                     generated_files['script.js'] = files['script.js']
                     print(f"Debug: Generated script.js ({len(files['script.js'])} chars)")
                 else:
-                    # Fallback: create a basic interactive script
-                    generated_files['script.js'] = """// Enhanced interactivity for the website
+                    # Fallback: create a robust interactive script
+                    generated_files['script.js'] = """// Enhanced interactivity and modern features for the website
 document.addEventListener('DOMContentLoaded', function() {
-    // Smooth scrolling for anchor links
-    const links = document.querySelectorAll('a[href^="#"]');
-    links.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    });
-
-    // Form handling
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Show loading state
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Processing...';
-            submitBtn.disabled = true;
-            
-            // Simulate form submission
-            setTimeout(() => {
-                alert('Thank you! Your request has been submitted.');
-                form.reset();
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }, 1500);
-        });
-    });
-
-    // Add hover animations
-    const buttons = document.querySelectorAll('button, .btn');
-    buttons.forEach(btn => {
-        btn.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-2px)';
-        });
-        btn.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-        });
-    });
-
-    // Image lazy loading and modal
-    const images = document.querySelectorAll('img');
-    images.forEach(img => {
-        img.addEventListener('click', function() {
-            if (this.dataset.modal !== 'false') {
-                showImageModal(this.src, this.alt);
-            }
-        });
-    });
-
-    function showImageModal(src, alt) {
-        const modal = document.createElement('div');
-        modal.className = 'image-modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <img src="${src}" alt="${alt}">
-            </div>
-        `;
+    
+    // Initialize modern interaction features
+    initializeAnimations();
+    initializeFormHandling();
+    initializeNavigation();
+    initializeModals();
+    initializeAccessibility();
+    initializeMobileFeatures();
+    
+    // Modern animations with intersection observer
+    function initializeAnimations() {
+        const animatedElements = document.querySelectorAll('.animate-on-scroll, .card, .product-item, .service-item, .feature, .hero');
         
-        document.body.appendChild(modal);
-        
-        modal.querySelector('.close').addEventListener('click', () => {
-            document.body.removeChild(modal);
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
         });
         
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
+        animatedElements.forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+        
+        // Enhanced button hover effects
+        const buttons = document.querySelectorAll('button, .btn, .cta-button, .submit-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px) scale(1.02)';
+                this.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+                this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+            });
         });
     }
-});"""
+}"""
                     print("Debug: Generated fallback script.js")
             
             elif ".env.example" in missing_file_type:
@@ -430,47 +401,67 @@ def create_website(prompt: str):
     
     # Step 1: Generate initial website (frontend focus)
     initial_prompt = f"""
-Create a stunning, modern, visually appealing website for: {prompt}
+Create a stunning, modern Vue.js application for: {prompt}
 
-🎨 DESIGN REQUIREMENTS - MAKE IT BEAUTIFUL:
-- Use vibrant, attractive color schemes that match the theme
-- Add gradients, shadows, and modern visual effects
-- Implement smooth animations and hover effects
-- Use modern typography with proper font pairings
-- Create visual hierarchy with proper spacing
-- Add background patterns, images, or subtle textures
-- Ensure the design is eye-catching and professional
+🎨 DESIGN REQUIREMENTS - MAKE IT STUNNING & MODERN:
+- Use VIBRANT, eye-catching color palettes with rich gradients and depth
+- Implement cutting-edge design trends: glassmorphism, neumorphism, gradient overlays
+- Add bold, colorful gradients with multiple color stops and dynamic effects
+- Use modern typography (Inter, Poppins, Outfit, Space Grotesk)
+- Create strong visual hierarchy with generous whitespace and perfect spacing
+- Add dynamic background effects, animated gradients, and modern textures
+- Ensure the design looks premium, polished, and contemporary (2024+ aesthetic)
+- Use modern CSS features: CSS Grid, Flexbox, custom properties, backdrop-filter
+- Implement smooth micro-interactions and delightful hover states
+- Make it responsive with mobile-first approach
+- Use RICH, SATURATED colors - avoid bland, washed-out palettes
+- Implement color-shifting gradients and dynamic color schemes
+- Add depth with layered shadows and vibrant highlights
 
-Generate these core files:
-- **index.html** - Complete HTML with rich content and proper structure
-- **style.css** - Beautiful, modern styling with animations and visual effects
-- **script.js** - Interactive features and smooth user experience
+Generate these core files (ALL are required):
+- **index.html** - Vue.js application HTML structure
+- **App.vue** - Main Vue.js component with rich functionality
+- **style.css** - Beautiful, vibrant styling with bold colors and animations
+- **main.js** - Vue.js application setup and configuration
+
+For the Vue.js component, include:
+- Vue 3 Composition API setup
+- Reactive data management
+- Interactive components with animations
+- Modern Vue.js patterns and best practices
 
 For the CSS, include:
-- Modern color palettes (gradients, vibrant colors)
-- Box shadows and border radius for depth
-- Smooth transitions and hover effects
-- Flexbox/Grid layouts for responsiveness
-- Custom animations and keyframes
-- Modern button designs with hover states
-- Beautiful typography and spacing
+- VIBRANT color schemes with rich, saturated colors (think neon gradients, bold primaries)
+- Multiple gradient overlays with color-shifting effects
+- Dynamic shadows with colored shadows and depth
+- Smooth transitions, transforms, and modern hover interactions
+- CSS Grid and Flexbox for perfect responsive layouts
+- Custom CSS animations and keyframes for delightful micro-interactions
+- Modern button designs with colorful glass/neumorphic effects
+- Contemporary typography scale and professional spacing systems
+- Bold background patterns and dynamic visual effects
 
-Make it look like a premium, professional website that users would love to visit!
+Make it look like a premium, visually striking website with rich colors and modern aesthetics!
 
 Format your response as:
 **index.html:**
 ```html
-[HTML code here]
+[Vue.js HTML structure]
+```
+
+**App.vue:**
+```vue
+[Complete Vue.js component with template, script, and style sections]
 ```
 
 **style.css:**
 ```css
-[CSS code here with beautiful, modern styling]
+[Global styles with vibrant, modern design]
 ```
 
-**script.js:** (if needed)
+**main.js:**
 ```javascript
-[JavaScript code here]
+[Vue.js application setup]
 ```
 """
 
@@ -508,12 +499,574 @@ Format your response as:
                 print("Debug: No additional files generated")
                 break
     
-    # Final validation
+    # Final validation and quality check
     is_valid, missing_files = validate_generated_files(all_generated_files, requires_backend)
     
     if not is_valid and requires_backend:
         print(f"Debug: Still missing files after all iterations: {missing_files}")
         # Continue anyway with a warning
+    
+    # Ensure Vue.js application has substantial content and vibrant design
+    if 'App.vue' not in all_generated_files and 'main.js' not in all_generated_files:
+        print("Debug: Creating enhanced Vue.js fallback application")
+        
+        # Create a vibrant Vue.js application
+        all_generated_files['index.html'] = """<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Vue.js Application</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>"""
+
+        all_generated_files['App.vue'] = """<template>
+  <div id="app" class="app-container">
+    <!-- Dynamic background -->
+    <div class="animated-bg">
+      <div class="gradient-orb orb-1"></div>
+      <div class="gradient-orb orb-2"></div>
+      <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Main content -->
+    <div class="content-wrapper">
+      <header class="hero-section">
+        <h1 class="hero-title gradient-text animate-slide-up">
+          {{ title }}
+        </h1>
+        <p class="hero-subtitle animate-fade-in">
+          {{ subtitle }}
+        </p>
+        <button 
+          @click="toggleMode" 
+          class="cta-button animate-bounce"
+          :class="{ active: isActive }"
+        >
+          <span class="button-content">
+            <span class="icon">{{ isActive ? '🌙' : '🌟' }}</span>
+            {{ buttonText }}
+          </span>
+        </button>
+      </header>
+
+      <!-- Feature cards -->
+      <section class="features-grid">
+        <div 
+          v-for="(feature, index) in features" 
+          :key="index"
+          class="feature-card glass-effect"
+          :style="{ animationDelay: index * 0.1 + 's' }"
+          @mouseenter="onCardHover(index)"
+          @mouseleave="onCardLeave(index)"
+        >
+          <div class="card-icon">{{ feature.icon }}</div>
+          <h3 class="card-title">{{ feature.title }}</h3>
+          <p class="card-description">{{ feature.description }}</p>
+          <div class="card-accent" :class="`accent-${index + 1}`"></div>
+        </div>
+      </section>
+
+      <!-- Interactive counter -->
+      <section class="interactive-section">
+        <div class="counter-container glass-effect">
+          <h3>Interactive Counter</h3>
+          <div class="counter-display">
+            <span class="counter-number gradient-text">{{ counter }}</span>
+          </div>
+          <div class="counter-controls">
+            <button @click="decrement" class="counter-btn minus">-</button>
+            <button @click="increment" class="counter-btn plus">+</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, computed, onMounted } from 'vue'
+
+export default {
+  name: 'App',
+  setup() {
+    const title = ref('Welcome to the Future')
+    const subtitle = ref('Experience cutting-edge design with vibrant colors and smooth animations')
+    const isActive = ref(false)
+    const counter = ref(0)
+    
+    const features = ref([
+      {
+        icon: '🚀',
+        title: 'Lightning Fast',
+        description: 'Built with Vue 3 for optimal performance'
+      },
+      {
+        icon: '🎨',
+        title: 'Beautiful Design',
+        description: 'Modern aesthetics with vibrant gradients'
+      },
+      {
+        icon: '📱',
+        title: 'Responsive',
+        description: 'Perfect on every device and screen size'
+      },
+      {
+        icon: '⚡',
+        title: 'Interactive',
+        description: 'Engaging animations and smooth transitions'
+      }
+    ])
+
+    const buttonText = computed(() => {
+      return isActive.value ? 'Night Mode' : 'Bright Mode'
+    })
+
+    const toggleMode = () => {
+      isActive.value = !isActive.value
+      document.body.classList.toggle('dark-mode')
+    }
+
+    const increment = () => {
+      counter.value++
+    }
+
+    const decrement = () => {
+      if (counter.value > 0) counter.value--
+    }
+
+    const onCardHover = (index) => {
+      console.log(`Hovering card ${index}`)
+    }
+
+    const onCardLeave = (index) => {
+      console.log(`Left card ${index}`)
+    }
+
+    onMounted(() => {
+      // Add entrance animations
+      const cards = document.querySelectorAll('.feature-card')
+      cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.2}s`
+      })
+    })
+
+    return {
+      title,
+      subtitle,
+      isActive,
+      counter,
+      features,
+      buttonText,
+      toggleMode,
+      increment,
+      decrement,
+      onCardHover,
+      onCardLeave
+    }
+  }
+}
+</script>
+
+<style scoped>
+/* Import global animations */
+@import url('./style.css');
+
+.app-container {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.animated-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: float 8s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, #ff6b6b, #ee5a24);
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, #4ecdc4, #44a08d);
+  top: 50%;
+  right: 10%;
+  animation-delay: 2s;
+}
+
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, #ffa726, #fb8c00);
+  bottom: 10%;
+  left: 50%;
+  animation-delay: 4s;
+}
+
+.content-wrapper {
+  position: relative;
+  z-index: 2;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-section {
+  text-align: center;
+  padding: 4rem 0;
+}
+
+.hero-title {
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #ff6b6b, #ffa726, #4ecdc4, #667eea);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 3s ease infinite;
+}
+
+.hero-subtitle {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-button {
+  padding: 1.2rem 3rem;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-button:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+}
+
+.cta-button.active {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin: 4rem 0;
+}
+
+.feature-card {
+  padding: 2rem;
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  transition: all 0.3s ease;
+  animation: slide-up 0.8s ease forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.feature-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.card-description {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+.card-accent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 0 0 20px 20px;
+}
+
+.accent-1 { background: linear-gradient(90deg, #ff6b6b, #ee5a24); }
+.accent-2 { background: linear-gradient(90deg, #4ecdc4, #44a08d); }
+.accent-3 { background: linear-gradient(90deg, #ffa726, #fb8c00); }
+.accent-4 { background: linear-gradient(90deg, #667eea, #764ba2); }
+
+.interactive-section {
+  display: flex;
+  justify-content: center;
+  margin: 4rem 0;
+}
+
+.counter-container {
+  padding: 3rem;
+  border-radius: 20px;
+  text-align: center;
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.counter-container h3 {
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.counter-display {
+  margin: 2rem 0;
+}
+
+.counter-number {
+  font-size: 4rem;
+  font-weight: 700;
+}
+
+.counter-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.counter-btn {
+  width: 60px;
+  height: 60px;
+  border: none;
+  border-radius: 50%;
+  font-size: 2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.counter-btn.plus {
+  background: linear-gradient(135deg, #4ecdc4, #44a08d);
+}
+
+.counter-btn.minus {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+}
+
+.counter-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-30px) rotate(5deg); }
+  66% { transform: translateY(-20px) rotate(-5deg); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes slide-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 1rem;
+  }
+  
+  .hero-section {
+    padding: 2rem 0;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .counter-container {
+    padding: 2rem;
+  }
+}
+</style>"""
+
+        all_generated_files['main.js'] = """const { createApp } = Vue
+
+createApp({
+  data() {
+    return {
+      title: 'Welcome to the Future',
+      subtitle: 'Experience cutting-edge design with vibrant colors and smooth animations',
+      isActive: false,
+      counter: 0,
+      features: [
+        {
+          icon: '🚀',
+          title: 'Lightning Fast',
+          description: 'Built with Vue 3 for optimal performance'
+        },
+        {
+          icon: '🎨',
+          title: 'Beautiful Design',
+          description: 'Modern aesthetics with vibrant gradients'
+        },
+        {
+          icon: '📱',
+          title: 'Responsive',
+          description: 'Perfect on every device and screen size'
+        },
+        {
+          icon: '⚡',
+          title: 'Interactive',
+          description: 'Engaging animations and smooth transitions'
+        }
+      ]
+    }
+  },
+  computed: {
+    buttonText() {
+      return this.isActive ? 'Night Mode' : 'Bright Mode'
+    }
+  },
+  methods: {
+    toggleMode() {
+      this.isActive = !this.isActive
+      document.body.classList.toggle('dark-mode')
+    },
+    increment() {
+      this.counter++
+    },
+    decrement() {
+      if (this.counter > 0) this.counter--
+    },
+    onCardHover(index) {
+      console.log(`Hovering card ${index}`)
+    },
+    onCardLeave(index) {
+      console.log(`Left card ${index}`)
+    }
+  },
+  mounted() {
+    // Add entrance animations
+    const cards = document.querySelectorAll('.feature-card')
+    cards.forEach((card, index) => {
+      card.style.animationDelay = `${index * 0.2}s`
+    })
+  }
+}).mount('#app')"""
+
+    elif 'script.js' in all_generated_files and len(all_generated_files['script.js']) < 200:
+        print("Debug: script.js too short, using enhanced fallback")
+        all_generated_files['script.js'] = """// Enhanced interactivity and modern features for the website
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Initialize modern interaction features
+    initializeAnimations();
+    initializeFormHandling();
+    initializeNavigation();
+    initializeModals();
+    initializeAccessibility();
+    initializeMobileFeatures();
+    
+    // Modern animations with intersection observer
+    function initializeAnimations() {
+        const animatedElements = document.querySelectorAll('.animate-on-scroll, .card, .product-item, .service-item, .feature, .hero');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        });
+        
+        animatedElements.forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+        
+        // Enhanced button hover effects
+        const buttons = document.querySelectorAll('button, .btn, .cta-button, .submit-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px) scale(1.02)';
+                this.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+                this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+            });
+        });
+    }
+}"""
     
     if not all_generated_files:
         return {"error": "Could not generate any files. Please try again."}
@@ -546,11 +1099,11 @@ Format your response as:
 def parse_gemini_response(response_text):
     """
     Parses the Gemini API response to extract file names and their content.
-    This version is more robust to variations in filename markers.
+    Enhanced for Vue.js and modern web development files.
     """
     files = {}
     
-    # Enhanced pattern to match various filename formats
+    # Enhanced pattern to match various filename formats including Vue.js files
     patterns = [
         # **filename.ext:** or **filename.ext**:
         re.compile(r"\*\*([\w.-]+)\*\*:?\s*\n+```(?:\w+)?\n(.*?)\n```", re.DOTALL),
@@ -592,11 +1145,15 @@ def parse_gemini_response(response_text):
         print(f"Debug: Found {len(code_blocks)} code blocks")
         
         if len(code_blocks) >= 1:
-            # Try to infer filenames based on content
+            # Try to infer filenames based on content for Vue.js and modern web apps
             for i, content in enumerate(code_blocks):
                 content = content.strip()
                 if "<!DOCTYPE html>" in content or "<html>" in content:
                     files["index.html"] = content
+                elif "<template>" in content and "<script>" in content and content.count("<") > 5:
+                    files["App.vue"] = content
+                elif "createApp" in content or "import { createApp }" in content:
+                    files["main.js"] = content
                 elif re.search(r"body\s*{", content) or re.search(r"[.#]\w+\s*{", content):
                     files["style.css"] = content
                 elif "from flask import" in content or "app = Flask" in content:
@@ -605,7 +1162,7 @@ def parse_gemini_response(response_text):
                     files["schema.sql"] = content
                 elif "import pymysql" in content or "def get_connection" in content:
                     files["database.py"] = content
-                elif ("function" in content or "const" in content or "var" in content) and "flask" not in content.lower():
+                elif ("function" in content or "const" in content or "var" in content) and "flask" not in content.lower() and "createApp" not in content:
                     files["script.js"] = content
                 elif content.startswith("#") or ("=" in content and not content.startswith("<")):
                     files[".env.example"] = content
