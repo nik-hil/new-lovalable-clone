@@ -401,7 +401,7 @@ def create_website(prompt: str):
     
     # Step 1: Generate initial website (frontend focus)
     initial_prompt = f"""
-Create a stunning, modern Vue.js application for: {prompt}
+Create a stunning, modern, FULLY FUNCTIONAL website for: {prompt}
 
 🎨 DESIGN REQUIREMENTS - MAKE IT STUNNING & MODERN:
 - Use VIBRANT, eye-catching color palettes with rich gradients and depth
@@ -418,50 +418,61 @@ Create a stunning, modern Vue.js application for: {prompt}
 - Implement color-shifting gradients and dynamic color schemes
 - Add depth with layered shadows and vibrant highlights
 
+⚠️ CRITICAL TECHNICAL REQUIREMENTS:
+- Create a WORKING website using vanilla HTML/CSS/JavaScript ONLY
+- NO framework imports (no Vue.js, React, Angular, etc.)
+- NO "import" statements or ES6 modules in JavaScript
+- Use standard HTML with full content visible immediately
+- Use vanilla JavaScript with document.addEventListener('DOMContentLoaded', ...)
+- All functionality must work without any framework dependencies
+
 Generate these core files (ALL are required):
-- **index.html** - Vue.js application HTML structure
-- **App.vue** - Main Vue.js component with rich functionality
+- **index.html** - Complete HTML with ALL content (no empty divs)
 - **style.css** - Beautiful, vibrant styling with bold colors and animations
-- **main.js** - Vue.js application setup and configuration
+- **script.js** - Interactive vanilla JavaScript (minimum 100+ lines)
 
-For the Vue.js component, include:
-- Vue 3 Composition API setup
-- Reactive data management
-- Interactive components with animations
-- Modern Vue.js patterns and best practices
+For the HTML file:
+- Include complete page structure with actual content
+- All content must be in HTML, not loaded by JavaScript
+- Use semantic HTML5 elements (header, main, section, footer)
+- Include all text, headings, and content relevant to: {prompt}
+- Reference only style.css and script.js files
 
-For the CSS, include:
-- VIBRANT color schemes with rich, saturated colors (think neon gradients, bold primaries)
+For the CSS file:
+- VIBRANT color schemes with rich, saturated colors
 - Multiple gradient overlays with color-shifting effects
 - Dynamic shadows with colored shadows and depth
 - Smooth transitions, transforms, and modern hover interactions
 - CSS Grid and Flexbox for perfect responsive layouts
-- Custom CSS animations and keyframes for delightful micro-interactions
+- Custom CSS animations and keyframes
 - Modern button designs with colorful glass/neumorphic effects
-- Contemporary typography scale and professional spacing systems
-- Bold background patterns and dynamic visual effects
+- Contemporary typography and professional spacing
 
-Make it look like a premium, visually striking website with rich colors and modern aesthetics!
+For the JavaScript file:
+- Use vanilla JavaScript only (no frameworks)
+- DOM event listeners and interactive features
+- Smooth animations and transitions
+- Form handling and validation (if applicable)
+- Dynamic content updates and user interactions
+- Modern ES6+ features (but NO imports/modules)
+- Comprehensive functionality (minimum 100+ lines)
+
+Make it a premium, visually striking website that WORKS immediately when opened!
 
 Format your response as:
 **index.html:**
 ```html
-[Vue.js HTML structure]
-```
-
-**App.vue:**
-```vue
-[Complete Vue.js component with template, script, and style sections]
+[Complete HTML with all content - NO framework dependencies]
 ```
 
 **style.css:**
 ```css
-[Global styles with vibrant, modern design]
+[Vibrant, modern CSS with bold colors]
 ```
 
-**main.js:**
+**script.js:**
 ```javascript
-[Vue.js application setup]
+[Comprehensive vanilla JavaScript - minimum 100 lines]
 ```
 """
 
@@ -506,26 +517,130 @@ Format your response as:
         print(f"Debug: Still missing files after all iterations: {missing_files}")
         # Continue anyway with a warning
     
-    # Ensure Vue.js application has substantial content and vibrant design
-    if 'App.vue' not in all_generated_files and 'main.js' not in all_generated_files:
-        print("Debug: Creating enhanced Vue.js fallback application")
+    # Check if we have Vue.js artifacts that will cause blank pages
+    has_broken_vue = (
+        ('main.js' in all_generated_files and ('createApp' in all_generated_files.get('main.js', '') or 'Vue' in all_generated_files.get('main.js', ''))) or
+        'App.vue' in all_generated_files or
+        ('<div id="app"></div>' in all_generated_files.get('index.html', '') and len(all_generated_files.get('index.html', '')) < 1000)
+    )
+    
+    if has_broken_vue or 'script.js' not in all_generated_files or len(all_generated_files.get('script.js', '')) < 200:
+        print("Debug: Replacing broken Vue.js with working vanilla HTML for prompt:", prompt)
         
-        # Create a vibrant Vue.js application
-        all_generated_files['index.html'] = """<!DOCTYPE html>
+        # Create a working flower shop website
+        if 'flower' in prompt.lower() or 'shop' in prompt.lower():
+            title = "Bloom & Petals - Premium Flower Shop"
+            hero_text = "Beautiful Flowers for Every Occasion"
+            content_body = '''
+    <section class="featured-flowers">
+        <div class="container">
+            <h2 class="section-title">Featured Flowers</h2>
+            <div class="flower-grid">
+                <div class="flower-card glass-effect">
+                    <div class="flower-image">🌹</div>
+                    <h3>Premium Roses</h3>
+                    <p class="price">$25.99</p>
+                    <button class="add-to-cart-btn" onclick="addToCart('roses', 25.99)">Add to Cart</button>
+                </div>
+                <div class="flower-card glass-effect">
+                    <div class="flower-image">🌷</div>
+                    <h3>Fresh Tulips</h3>
+                    <p class="price">$18.99</p>
+                    <button class="add-to-cart-btn" onclick="addToCart('tulips', 18.99)">Add to Cart</button>
+                </div>
+                <div class="flower-card glass-effect">
+                    <div class="flower-image">🌺</div>
+                    <h3>Exotic Lilies</h3>
+                    <p class="price">$32.99</p>
+                    <button class="add-to-cart-btn" onclick="addToCart('lilies', 32.99)">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="order-section">
+        <div class="container">
+            <h2 class="section-title">Your Order</h2>
+            <div class="order-container">
+                <div class="cart-display glass-effect">
+                    <h3>Shopping Cart</h3>
+                    <div id="cartItems" class="cart-items">
+                        <p class="empty-cart">Your cart is empty</p>
+                    </div>
+                    <div id="cartTotal" class="cart-total">Total: $0.00</div>
+                </div>
+                
+                <form class="order-form glass-effect" id="orderForm">
+                    <h3>Customer Information</h3>
+                    <div class="form-group">
+                        <label for="customerName">Full Name</label>
+                        <input type="text" id="customerName" name="customerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customerEmail">Email</label>
+                        <input type="email" id="customerEmail" name="customerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="deliveryAddress">Delivery Address</label>
+                        <textarea id="deliveryAddress" name="deliveryAddress" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn" id="submitOrder" disabled>Place Order</button>
+                </form>
+            </div>
+        </div>
+    </section>'''
+        else:
+            title = "Modern Website"
+            hero_text = "Welcome to Our Amazing Website"
+            content_body = '''
+    <section class="features-section">
+        <div class="container">
+            <h2 class="section-title">Amazing Features</h2>
+            <div class="features-grid">
+                <div class="feature-card glass-effect">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Built with modern technology</p>
+                </div>
+                <div class="feature-card glass-effect">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Beautiful Design</h3>
+                    <p>Modern aesthetics with vibrant gradients</p>
+                </div>
+            </div>
+        </div>
+    </section>'''
+        
+        all_generated_files['index.html'] = f"""<!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Vue.js Application</title>
+    <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="app"></div>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="main.js"></script>
-  </body>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="hero-section">
+        <h1 class="hero-title gradient-text">{hero_text}</h1>
+        <p class="hero-subtitle">Premium fresh flowers delivered with love</p>
+        <button class="cta-button" onclick="showWelcome()">Explore Our Shop</button>
+    </header>
+
+    <main class="main-content">
+        {content_body}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 {title}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
 </html>"""
 
         all_generated_files['App.vue'] = """<template>
