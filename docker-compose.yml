@@ -1,44 +1,44 @@
+version: '3.8'
+
 services:
   web:
     build: .
     ports:
-      - "5001:5001"  # Flask backend
-      - "8080:8080"  # Vue.js frontend dev server
-      - "3000:3000"  # Generated Vue.js sites dev server
+      - "5001:5001"
+      - "8080:8080"
+      - "3000:3000"
     volumes:
       - .:/app
-      - /app/.venv  # Exclude virtual environment from volume mount
-      - /app/node_modules  # Exclude node_modules from volume mount
+      - /app/node_modules
     environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
       - NODE_ENV=development
+      - PYTHONPATH=/app/src
+    env_file:
+      - .env
     depends_on:
       - mysql
     networks:
       - app-network
-    restart: unless-stopped
+    command: sh -c "cd /app && python3 src/server.py & sleep 3 && npm run serve"
 
   test-runner:
     build: .
     volumes:
-      - ./output:/app/output
-      - ./tests:/app/tests
-    working_dir: /app
+      - .:/app
+      - /app/node_modules
     environment:
-      - PYTHONPATH=/app
-      - FLASK_ENV=testing
+      - PYTHONPATH=/app/src
+    env_file:
+      - .env
+    depends_on:
+      - mysql
     networks:
       - app-network
-    ports:
-      - "5002:5002"  # Separate port for testing generated sites
-    command: sh -c "cd /app/output && python3 -m http.server 5002 2>/dev/null || tail -f /dev/null"
-    restart: unless-stopped
+    command: sleep infinity
 
   mysql:
     image: mysql:8.0
     container_name: lovable_mysql
-    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: lovable_db
@@ -48,7 +48,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./mysql-init:/docker-entrypoint-initdb.d
     networks:
       - app-network
 

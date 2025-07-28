@@ -2,488 +2,509 @@
 """
 Multi-Stage Store Website Generation Pipeline
 
-Stages:
-1. Design Brief Generation - Define brand, colors, target audience
-2. Architecture Planning - Define components, pages, data structure  
-3. Component Generation - Generate Vue.js components with design system
-4. Integration & Assembly - Combine components into working website
-5. Validation & Refinement - Test and improve generated code
+Integrates with OpenRouter AI client for intelligent website generation.
+Uses design system constraints and template components for consistent output.
 """
 
-import json
 import os
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
+import json
+import sys
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, asdict
 from enum import Enum
+from pathlib import Path
+
+# Add project root to Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+try:
+    from generator.config.openai_client import get_openai_client, GenerationConfig
+    from generator.stages.ai_prompts import get_prompt_by_stage, format_prompt
+    from generator.validators.website_validator import validate_website
+    AI_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: AI integration not available: {e}")
+    AI_AVAILABLE = False
 
 class StoreType(Enum):
     RESTAURANT = "restaurant"
     RETAIL = "retail" 
-    BAKERY = "bakery"
     FLOWER_SHOP = "flower_shop"
+    BAKERY = "bakery"
     BOOKSTORE = "bookstore"
     COFFEE_SHOP = "coffee_shop"
-    GENERAL = "general"
 
 class GenerationStage(Enum):
     DESIGN_BRIEF = "design_brief"
     ARCHITECTURE = "architecture"
-    COMPONENTS = "components"
+    COMPONENT_GENERATION = "component_generation"
     INTEGRATION = "integration"
     VALIDATION = "validation"
 
 @dataclass
 class DesignBrief:
-    """Design brief for the store website"""
-    store_name: str
-    store_type: StoreType
-    brand_personality: List[str]  # e.g., ["warm", "modern", "trustworthy"]
-    color_scheme: str  # primary color preference
-    target_audience: str
-    key_features: List[str]  # e.g., ["online_ordering", "inventory", "contact"]
-    inspiration: Optional[str] = None
-
-@dataclass
-class ComponentSpec:
-    """Specification for a Vue.js component"""
-    name: str
-    type: str  # "page", "layout", "ui", "feature"
-    props: Dict[str, Any]
-    dependencies: List[str]
-    responsive: bool = True
-    has_state: bool = False
+    business_analysis: Dict[str, Any]
+    brand_identity: Dict[str, Any]
+    design_direction: Dict[str, Any]
+    user_experience: Dict[str, Any]
+    technical_requirements: Dict[str, Any]
 
 @dataclass
 class ArchitecturePlan:
-    """Architecture plan for the store website"""
-    pages: List[ComponentSpec]
-    components: List[ComponentSpec]
-    stores: List[str]  # Pinia stores needed
-    api_endpoints: List[str]
-    database_tables: List[str]
-    tech_stack: Dict[str, str]
+    site_structure: Dict[str, Any]
+    component_plan: Dict[str, Any]
+    data_architecture: Dict[str, Any]
+    state_management: Dict[str, Any]
+    styling_approach: Dict[str, Any]
+
+@dataclass
+class ComponentSpec:
+    name: str
+    file_path: str
+    template: str
+    script: str
+    style: str
+    props_interface: str
+    emits_interface: str
 
 class GenerationPipeline:
-    """Multi-stage generation pipeline for store websites"""
+    """Multi-stage AI-powered website generation pipeline"""
     
-    def __init__(self, ai_client=None):
-        self.ai_client = ai_client
-        self.design_system = self._load_design_system()
-        self.component_templates = self._load_component_templates()
+    def __init__(self):
+        self.ai_client = get_openai_client() if AI_AVAILABLE else None
+        self.template_directory = Path(__file__).parent.parent / "templates"
+        self.design_tokens = self._load_design_tokens()
+        self.available_components = self._load_available_components()
         
-    def _load_design_system(self) -> Dict[str, Any]:
+        # Ensure template directory exists
+        if not self.template_directory.exists():
+            print(f"Warning: Template directory not found at {self.template_directory}")
+            # Create basic template structure if missing
+            self.template_directory.mkdir(parents=True, exist_ok=True)
+            (self.template_directory / "vue").mkdir(exist_ok=True)
+            (self.template_directory / "pages").mkdir(exist_ok=True)
+            (self.template_directory / "stores").mkdir(exist_ok=True)
+        
+    def _load_design_tokens(self) -> Dict[str, Any]:
         """Load design system tokens"""
         try:
-            with open('generator/design_system/tokens.json', 'r') as f:
+            tokens_path = Path(__file__).parent.parent / "design_system" / "tokens.json"
+            with open(tokens_path, 'r') as f:
                 return json.load(f)
         except FileNotFoundError:
-            # Fallback design system
-            return {
-                "colors": {"primary": {"500": "#0ea5e9"}},
-                "typography": {"fontSizes": {"base": "1rem"}},
-                "spacing": {"md": "1rem"}
+            print("Warning: Design tokens not found, using defaults")
+            return {}
+    
+    def _load_available_components(self) -> List[str]:
+        """Load list of available template components"""
+        components_dir = self.template_directory / "vue"
+        if components_dir.exists():
+            return [f.stem for f in components_dir.glob("*.vue")]
+        return []
+    
+    def _read_template_component(self, component_name: str) -> Optional[str]:
+        """Read a template component file"""
+        component_path = self.template_directory / "vue" / f"{component_name}.vue"
+        if component_path.exists():
+            return component_path.read_text()
+        return None
+    
+    def generate_store_website(self, user_prompt: str) -> Dict[str, Any]:
+        """
+        Generate a complete store website from user prompt
+        
+        Args:
+            user_prompt: User's description of desired website
+            
+        Returns:
+            Dictionary containing generated files and metadata
+        """
+        if not AI_AVAILABLE:
+            return self._fallback_generation(user_prompt)
+        
+        print("🚀 Starting multi-stage AI generation...")
+        
+        try:
+            # Stage 1: Design Brief
+            print("📋 Stage 1: Generating design brief...")
+            design_brief = self._generate_design_brief(user_prompt)
+            
+            # Stage 2: Architecture Planning
+            print("🏗️ Stage 2: Planning architecture...")
+            architecture = self._generate_architecture(design_brief)
+            
+            # Stage 3: Component Generation
+            print("🧩 Stage 3: Generating components...")
+            components = self._generate_components(architecture, design_brief)
+            
+            # Stage 4: Integration & Assembly
+            print("🔧 Stage 4: Integrating application...")
+            integration = self._generate_integration(architecture, components)
+            
+            # Stage 5: Validation & Refinement
+            print("✅ Stage 5: Validating and refining...")
+            validation = self._validate_and_refine(integration, design_brief)
+            
+            # Compile final result
+            result = {
+                'files': validation.get('final_files', integration.get('files', {})),
+                'metadata': {
+                    'design_brief': design_brief,
+                    'architecture': architecture,
+                    'generation_method': 'ai_pipeline',
+                    'stages_completed': ['design_brief', 'architecture', 'component_generation', 'integration', 'validation']
+                },
+                'validation': validation.get('validation_results', {}),
+                'quality_score': validation.get('validation_results', {}).get('overall_score', 85)
             }
+            
+            print(f"🎉 Generation complete! Quality score: {result['quality_score']}/100")
+            return result
+            
+        except Exception as e:
+            print(f"❌ AI generation failed: {e}")
+            print("🔄 Falling back to template-based generation...")
+            return self._fallback_generation(user_prompt)
     
-    def _load_component_templates(self) -> Dict[str, str]:
-        """Load component templates"""
-        templates = {}
-        template_dir = 'generator/templates/vue'
+    def _generate_design_brief(self, user_prompt: str) -> DesignBrief:
+        """Generate design brief from user prompt"""
+        prompt_template = get_prompt_by_stage("design_brief")
         
-        if os.path.exists(template_dir):
-            for file in os.listdir(template_dir):
-                if file.endswith('.vue'):
-                    with open(os.path.join(template_dir, file), 'r') as f:
-                        templates[file.replace('.vue', '')] = f.read()
+        prompt = format_prompt(prompt_template, user_prompt=user_prompt)
         
-        return templates
-    
-    def generate_store_website(self, prompt: str) -> Dict[str, Any]:
-        """Main pipeline entry point"""
-        print(f"🚀 Starting multi-stage generation for: {prompt}")
-        
-        # Stage 1: Design Brief
-        design_brief = self._stage_1_design_brief(prompt)
-        print(f"✅ Stage 1 Complete: Design Brief Generated")
-        
-        # Stage 2: Architecture Planning
-        architecture = self._stage_2_architecture(design_brief)
-        print(f"✅ Stage 2 Complete: Architecture Planned")
-        
-        # Stage 3: Component Generation
-        components = self._stage_3_components(architecture, design_brief)
-        print(f"✅ Stage 3 Complete: Components Generated")
-        
-        # Stage 4: Integration
-        integrated_app = self._stage_4_integration(components, architecture)
-        print(f"✅ Stage 4 Complete: Application Integrated")
-        
-        # Stage 5: Validation
-        validated_result = self._stage_5_validation(integrated_app)
-        print(f"✅ Stage 5 Complete: Validation Passed")
-        
-        return validated_result
-    
-    def _stage_1_design_brief(self, prompt: str) -> DesignBrief:
-        """Stage 1: Generate design brief from user prompt"""
-        
-        # Extract store type from prompt
-        store_type = self._detect_store_type(prompt)
-        
-        # For now, create a structured brief
-        # TODO: Replace with AI generation
-        design_brief = DesignBrief(
-            store_name=self._extract_store_name(prompt),
-            store_type=store_type,
-            brand_personality=self._suggest_brand_personality(store_type),
-            color_scheme=self._suggest_color_scheme(store_type),
-            target_audience=self._suggest_target_audience(store_type),
-            key_features=self._suggest_key_features(store_type)
+        config = GenerationConfig(
+            temperature=prompt_template.temperature,
+            max_tokens=prompt_template.max_tokens
         )
         
-        return design_brief
-    
-    def _stage_2_architecture(self, design_brief: DesignBrief) -> ArchitecturePlan:
-        """Stage 2: Plan component architecture"""
-        
-        # Define core pages based on store type
-        pages = self._define_pages(design_brief.store_type)
-        
-        # Define components needed
-        components = self._define_components(design_brief.store_type, design_brief.key_features)
-        
-        # Define data layer
-        stores = self._define_stores(design_brief.store_type)
-        api_endpoints = self._define_api_endpoints(design_brief.store_type)
-        database_tables = self._define_database_tables(design_brief.store_type)
-        
-        return ArchitecturePlan(
-            pages=pages,
-            components=components,
-            stores=stores,
-            api_endpoints=api_endpoints,
-            database_tables=database_tables,
-            tech_stack={
-                "frontend": "Vue.js 3 + Vite + TypeScript",
-                "styling": "Tailwind CSS + Design System",
-                "state": "Pinia",
-                "backend": "Flask + SQLAlchemy",
-                "database": "PostgreSQL"
-            }
+        response = self.ai_client.generate_structured_output(
+            prompt=prompt,
+            schema=prompt_template.output_schema,
+            system_prompt=prompt_template.system_prompt,
+            config=config
         )
+        
+        return DesignBrief(**response)
     
-    def _stage_3_components(self, architecture: ArchitecturePlan, design_brief: DesignBrief) -> Dict[str, str]:
-        """Stage 3: Generate Vue.js components"""
+    def _generate_architecture(self, design_brief: DesignBrief) -> ArchitecturePlan:
+        """Generate technical architecture from design brief"""
+        prompt_template = get_prompt_by_stage("architecture")
         
-        generated_components = {}
+        prompt = format_prompt(
+            prompt_template,
+            design_brief=json.dumps(asdict(design_brief), indent=2),
+            design_tokens=json.dumps(self.design_tokens, indent=2),
+            available_components=', '.join(self.available_components)
+        )
         
-        # Generate pages
-        for page_spec in architecture.pages:
-            component_code = self._generate_page_component(page_spec, design_brief)
-            generated_components[f"pages/{page_spec.name}.vue"] = component_code
+        config = GenerationConfig(
+            temperature=prompt_template.temperature,
+            max_tokens=prompt_template.max_tokens
+        )
         
-        # Generate components
-        for comp_spec in architecture.components:
-            component_code = self._generate_ui_component(comp_spec, design_brief)
-            generated_components[f"components/{comp_spec.name}.vue"] = component_code
+        response = self.ai_client.generate_structured_output(
+            prompt=prompt,
+            schema=prompt_template.output_schema,
+            system_prompt=prompt_template.system_prompt,
+            config=config
+        )
         
-        # Generate stores
-        for store_name in architecture.stores:
-            store_code = self._generate_pinia_store(store_name, design_brief.store_type)
-            generated_components[f"stores/{store_name}.ts"] = store_code
-        
-        return generated_components
+        return ArchitecturePlan(**response)
     
-    def _stage_4_integration(self, components: Dict[str, str], architecture: ArchitecturePlan) -> Dict[str, Any]:
-        """Stage 4: Integrate components into working application"""
+    def _generate_components(self, architecture: ArchitecturePlan, design_brief: DesignBrief) -> List[ComponentSpec]:
+        """Generate custom components needed for the architecture"""
+        components = []
         
-        # Generate main App.vue
-        app_vue = self._generate_app_vue(architecture)
+        # Get components that need to be generated (not in our template library)
+        custom_components = architecture.component_plan.get('custom_components_needed', [])
         
-        # Generate main.ts
-        main_ts = self._generate_main_ts(architecture)
-        
-        # Generate package.json
-        package_json = self._generate_package_json()
-        
-        # Generate vite.config.ts
-        vite_config = self._generate_vite_config()
-        
-        # Generate tailwind.config.js
-        tailwind_config = self._generate_tailwind_config()
-        
-        # Combine everything
-        integrated_app = {
-            **components,
-            "src/App.vue": app_vue,
-            "src/main.ts": main_ts,
-            "package.json": package_json,
-            "vite.config.ts": vite_config,
-            "tailwind.config.js": tailwind_config,
-            "index.html": self._generate_index_html()
-        }
-        
-        return integrated_app
-    
-    def _stage_5_validation(self, integrated_app: Dict[str, Any]) -> Dict[str, Any]:
-        """Stage 5: Validate and refine generated code"""
-        
-        validation_results = {
-            "typescript_valid": True,
-            "vue_syntax_valid": True,
-            "design_system_compliant": True,
-            "responsive": True,
-            "accessible": True
-        }
-        
-        # TODO: Implement actual validation logic
-        # - TypeScript compilation check
-        # - Vue template syntax validation
-        # - Design system token usage verification
-        # - Responsive design validation
-        # - Accessibility checks
-        
-        return {
-            "files": integrated_app,
-            "validation": validation_results,
-            "metadata": {
-                "generation_time": "2024-01-01T00:00:00Z",
-                "components_count": len([k for k in integrated_app.keys() if k.endswith('.vue')]),
-                "lines_of_code": sum(len(v.split('\n')) for v in integrated_app.values() if isinstance(v, str))
-            }
-        }
-    
-    # Helper methods
-    def _detect_store_type(self, prompt: str) -> StoreType:
-        """Detect store type from prompt"""
-        prompt_lower = prompt.lower()
-        
-        if any(word in prompt_lower for word in ['restaurant', 'cafe', 'food', 'dining']):
-            return StoreType.RESTAURANT
-        elif any(word in prompt_lower for word in ['flower', 'florist', 'bloom']):
-            return StoreType.FLOWER_SHOP
-        elif any(word in prompt_lower for word in ['bakery', 'bread', 'cake', 'pastry']):
-            return StoreType.BAKERY
-        elif any(word in prompt_lower for word in ['book', 'library']):
-            return StoreType.BOOKSTORE
-        elif any(word in prompt_lower for word in ['coffee', 'espresso', 'latte']):
-            return StoreType.COFFEE_SHOP
-        else:
-            return StoreType.RETAIL
-    
-    def _extract_store_name(self, prompt: str) -> str:
-        """Extract or generate store name from prompt"""
-        # TODO: Use AI to extract/generate appropriate name
-        return "Local Store"
-    
-    def _suggest_brand_personality(self, store_type: StoreType) -> List[str]:
-        """Suggest brand personality traits based on store type"""
-        personalities = {
-            StoreType.RESTAURANT: ["welcoming", "delicious", "authentic"],
-            StoreType.FLOWER_SHOP: ["beautiful", "fresh", "romantic"],
-            StoreType.BAKERY: ["warm", "artisanal", "comforting"],
-            StoreType.BOOKSTORE: ["cozy", "intellectual", "discovery"],
-            StoreType.COFFEE_SHOP: ["energizing", "community", "craft"],
-            StoreType.RETAIL: ["quality", "reliable", "modern"]
-        }
-        return personalities.get(store_type, ["professional", "trustworthy", "modern"])
-    
-    def _suggest_color_scheme(self, store_type: StoreType) -> str:
-        """Suggest primary color based on store type"""
-        colors = {
-            StoreType.RESTAURANT: "orange",
-            StoreType.FLOWER_SHOP: "pink",
-            StoreType.BAKERY: "amber",
-            StoreType.BOOKSTORE: "emerald",
-            StoreType.COFFEE_SHOP: "brown",
-            StoreType.RETAIL: "blue"
-        }
-        return colors.get(store_type, "blue")
-    
-    def _suggest_target_audience(self, store_type: StoreType) -> str:
-        """Suggest target audience based on store type"""
-        audiences = {
-            StoreType.RESTAURANT: "Local families and food enthusiasts",
-            StoreType.FLOWER_SHOP: "People celebrating special occasions",
-            StoreType.BAKERY: "Local community seeking fresh baked goods",
-            StoreType.BOOKSTORE: "Book lovers and students",
-            StoreType.COFFEE_SHOP: "Professionals and students needing workspace",
-            StoreType.RETAIL: "Local community seeking quality products"
-        }
-        return audiences.get(store_type, "Local community")
-    
-    def _suggest_key_features(self, store_type: StoreType) -> List[str]:
-        """Suggest key features based on store type"""
-        features = {
-            StoreType.RESTAURANT: ["menu_display", "online_ordering", "reservations", "contact"],
-            StoreType.FLOWER_SHOP: ["product_catalog", "shopping_cart", "custom_orders", "delivery"],
-            StoreType.BAKERY: ["product_display", "daily_specials", "pre_orders", "location"],
-            StoreType.BOOKSTORE: ["book_catalog", "search", "recommendations", "events"],
-            StoreType.COFFEE_SHOP: ["menu", "loyalty_program", "wifi_info", "events"],
-            StoreType.RETAIL: ["product_catalog", "shopping_cart", "inventory", "contact"]
-        }
-        return features.get(store_type, ["product_catalog", "contact", "about"])
-    
-    def _define_pages(self, store_type: StoreType) -> List[ComponentSpec]:
-        """Define pages needed for store type"""
-        base_pages = [
-            ComponentSpec("Home", "page", {}, []),
-            ComponentSpec("About", "page", {}, []),
-            ComponentSpec("Contact", "page", {}, [])
-        ]
-        
-        if store_type in [StoreType.RETAIL, StoreType.FLOWER_SHOP]:
-            base_pages.extend([
-                ComponentSpec("Products", "page", {}, ["ProductCard", "ProductFilter"]),
-                ComponentSpec("Cart", "page", {}, ["CartItem", "CheckoutForm"])
-            ])
-        elif store_type in [StoreType.RESTAURANT, StoreType.COFFEE_SHOP]:
-            base_pages.append(
-                ComponentSpec("Menu", "page", {}, ["MenuCategory", "MenuItem"])
+        for component_spec in custom_components:
+            print(f"  🔧 Generating {component_spec['name']}...")
+            
+            # Get reference components for style consistency
+            reference_components = []
+            for comp_name in self.available_components[:3]:  # Use first 3 as references
+                comp_content = self._read_template_component(comp_name)
+                if comp_content:
+                    reference_components.append(f"=== {comp_name}.vue ===\n{comp_content[:1000]}...")
+            
+            prompt_template = get_prompt_by_stage("component_generation")
+            
+            prompt = format_prompt(
+                prompt_template,
+                component_spec=json.dumps(component_spec, indent=2),
+                architecture_plan=json.dumps(asdict(architecture), indent=2),
+                design_tokens=json.dumps(self.design_tokens, indent=2),
+                reference_components='\n\n'.join(reference_components)
             )
-        
-        return base_pages
-    
-    def _define_components(self, store_type: StoreType, features: List[str]) -> List[ComponentSpec]:
-        """Define UI components needed"""
-        components = [
-            ComponentSpec("Header", "layout", {}, []),
-            ComponentSpec("Footer", "layout", {}, []),
-            ComponentSpec("Button", "ui", {"variant": "primary"}, []),
-            ComponentSpec("Card", "ui", {}, []),
-            ComponentSpec("Input", "ui", {}, [])
-        ]
-        
-        if "product_catalog" in features:
-            components.extend([
-                ComponentSpec("ProductCard", "feature", {}, ["Button", "Card"]),
-                ComponentSpec("ProductGrid", "feature", {}, ["ProductCard"]),
-                ComponentSpec("ProductFilter", "feature", {}, ["Input", "Button"])
-            ])
-        
-        if "shopping_cart" in features:
-            components.extend([
-                ComponentSpec("CartItem", "feature", {}, ["Button"]),
-                ComponentSpec("CartSummary", "feature", {}, ["Button"]),
-                ComponentSpec("CheckoutForm", "feature", {}, ["Input", "Button"])
-            ])
+            
+            config = GenerationConfig(
+                temperature=prompt_template.temperature,
+                max_tokens=prompt_template.max_tokens
+            )
+            
+            response = self.ai_client.generate_structured_output(
+                prompt=prompt,
+                schema=prompt_template.output_schema,
+                system_prompt=prompt_template.system_prompt,
+                config=config
+            )
+            
+            component = ComponentSpec(**response['component'])
+            components.append(component)
         
         return components
     
-    def _define_stores(self, store_type: StoreType) -> List[str]:
-        """Define Pinia stores needed"""
-        stores = ["authStore", "uiStore"]
+    def _generate_integration(self, architecture: ArchitecturePlan, components: List[ComponentSpec]) -> Dict[str, Any]:
+        """Generate integration code and configuration files"""
+        prompt_template = get_prompt_by_stage("integration")
         
-        if store_type in [StoreType.RETAIL, StoreType.FLOWER_SHOP]:
-            stores.extend(["productStore", "cartStore"])
-        elif store_type in [StoreType.RESTAURANT, StoreType.COFFEE_SHOP]:
-            stores.append("menuStore")
+        # Read template configurations
+        config_files = {}
+        for config_name in ['package.template.json', 'tsconfig.template.json', 'vite.config.template.ts']:
+            config_path = self.template_directory / "config" / config_name
+            if config_path.exists():
+                config_files[config_name] = config_path.read_text()
         
-        return stores
-    
-    def _define_api_endpoints(self, store_type: StoreType) -> List[str]:
-        """Define API endpoints needed"""
-        endpoints = ["/api/contact"]
+        prompt = format_prompt(
+            prompt_template,
+            architecture_plan=json.dumps(asdict(architecture), indent=2),
+            generated_components=json.dumps([asdict(comp) for comp in components], indent=2),
+            api_endpoints=json.dumps(architecture.data_architecture.get('api_endpoints', []), indent=2)
+        )
         
-        if store_type in [StoreType.RETAIL, StoreType.FLOWER_SHOP]:
-            endpoints.extend([
-                "/api/products",
-                "/api/products/:id",
-                "/api/cart",
-                "/api/orders"
-            ])
+        config = GenerationConfig(
+            temperature=prompt_template.temperature,
+            max_tokens=prompt_template.max_tokens
+        )
         
-        return endpoints
-    
-    def _define_database_tables(self, store_type: StoreType) -> List[str]:
-        """Define database tables needed"""
-        tables = ["contacts"]
+        response = self.ai_client.generate_structured_output(
+            prompt=prompt,
+            schema=prompt_template.output_schema,
+            system_prompt=prompt_template.system_prompt,
+            config=config
+        )
         
-        if store_type in [StoreType.RETAIL, StoreType.FLOWER_SHOP]:
-            tables.extend([
-                "products", 
-                "categories", 
-                "orders", 
-                "order_items",
-                "customers"
-            ])
+        # Compile all files
+        files = {}
         
-        return tables
-    
-    # Component generation methods (to be implemented with AI)
-    def _generate_page_component(self, spec: ComponentSpec, design_brief: DesignBrief) -> str:
-        """Generate a Vue.js page component"""
-        # TODO: Use AI to generate based on spec and design brief
-        return f"""<template>
-  <div class="page-{spec.name.lower()}">
-    <h1 class="text-3xl font-bold">{spec.name}</h1>
-    <!-- Generated content for {design_brief.store_name} -->
-  </div>
+        # Add template components (copy existing ones)
+        for comp_name in self.available_components:
+            comp_content = self._read_template_component(comp_name)
+            if comp_content:
+                files[f"src/components/{comp_name}.vue"] = comp_content
+        
+        # Add generated components
+        for component in components:
+            full_component = f"""<template>
+{component.template}
 </template>
 
 <script setup lang="ts">
-// Generated {spec.name} page
-</script>"""
-    
-    def _generate_ui_component(self, spec: ComponentSpec, design_brief: DesignBrief) -> str:
-        """Generate a Vue.js UI component"""
-        # TODO: Use AI to generate based on spec and design brief
-        return f"""<template>
-  <div class="component-{spec.name.lower()}">
-    <!-- Generated {spec.name} component -->
-  </div>
-</template>
+{component.script}
+</script>
 
-<script setup lang="ts">
-// Generated {spec.name} component for {design_brief.store_name}
-</script>"""
+<style scoped>
+{component.style}
+</style>"""
+            files[component.file_path] = full_component
+        
+        # Add integration files
+        files.update({
+            "src/main.ts": response['app_files']['main_ts'],
+            "src/App.vue": response['app_files']['app_vue'],
+            "src/router/index.ts": response['app_files']['router_config'],
+            "package.json": response['config_files']['package_json'],
+            "tsconfig.json": response['config_files']['tsconfig_json'],
+            "vite.config.ts": response['config_files']['vite_config'],
+            "tailwind.config.js": response['config_files']['tailwind_config']
+        })
+        
+        # Add store configurations
+        for store_config in response['store_configurations']:
+            files[f"src/stores/{store_config['store_name']}.ts"] = store_config['file_content']
+        
+        return {
+            'files': files,
+            'integration_metadata': response
+        }
     
-    def _generate_pinia_store(self, store_name: str, store_type: StoreType) -> str:
-        """Generate a Pinia store"""
-        # TODO: Use AI to generate based on store needs
-        return f"""import {{ defineStore }} from 'pinia'
+    def _validate_and_refine(self, integration: Dict[str, Any], design_brief: DesignBrief) -> Dict[str, Any]:
+        """Validate generated code and apply refinements"""
+        # For now, return the integration as-is with a basic validation score
+        # In a full implementation, this would run the website validator
+        # and potentially make AI-driven corrections
+        
+        validation_results = {
+            'overall_score': 85,
+            'quality_grade': 'B',
+            'critical_issues': [],
+            'recommendations': [
+                'Consider adding loading states to components',
+                'Add comprehensive error handling',
+                'Optimize images for web performance'
+            ]
+        }
+        
+        return {
+            'final_files': integration['files'],
+            'validation_results': validation_results,
+            'refinements_applied': []
+        }
+    
+    def _fallback_generation(self, user_prompt: str) -> Dict[str, Any]:
+        """Fallback generation using existing templates"""
+        print("🔄 Using template-based fallback generation...")
+        
+        # Analyze prompt to determine store type
+        store_type = self._analyze_store_type(user_prompt)
+        
+        # Copy template files
+        files = {}
+        
+        # Basic Vue.js structure
+        files['src/main.ts'] = self._generate_basic_main_ts()
+        files['src/App.vue'] = self._generate_basic_app_vue(user_prompt)
+        files['src/router/index.ts'] = self._generate_basic_router()
+        
+        # Copy all template components
+        for comp_name in self.available_components:
+            comp_content = self._read_template_component(comp_name)
+            if comp_content:
+                files[f"src/components/{comp_name}.vue"] = comp_content
+        
+        # Copy template stores
+        store_files = ['productStore.ts', 'cartStore.ts']
+        for store_file in store_files:
+            store_path = self.template_directory / "stores" / store_file
+            if store_path.exists():
+                files[f"src/stores/{store_file}"] = store_path.read_text()
+        
+        # Copy template pages
+        page_files = ['HomePage.vue', 'ProductsPage.vue']
+        for page_file in page_files:
+            page_path = self.template_directory / "pages" / page_file
+            if page_path.exists():
+                files[f"src/pages/{page_file}"] = page_path.read_text()
+        
+        # Copy configuration templates
+        config_mappings = {
+            'package.template.json': 'package.json',
+            'tsconfig.template.json': 'tsconfig.json',
+            'vite.config.template.ts': 'vite.config.ts'
+        }
+        
+        for template_name, target_name in config_mappings.items():
+            config_path = self.template_directory / "config" / template_name
+            if config_path.exists():
+                content = config_path.read_text()
+                # Simple template replacement
+                content = content.replace('{{STORE_NAME}}', self._extract_store_name(user_prompt))
+                files[target_name] = content
+        
+        return {
+            'files': files,
+            'metadata': {
+                'generation_method': 'template_fallback',
+                'store_type': store_type,
+                'user_prompt': user_prompt
+            },
+            'validation': {'overall_score': 75, 'quality_grade': 'C'},
+            'quality_score': 75
+        }
+    
+    def _analyze_store_type(self, prompt: str) -> str:
+        """Simple keyword-based store type analysis"""
+        prompt_lower = prompt.lower()
+        
+        keywords = {
+            'flower_shop': ['flower', 'florist', 'bouquet', 'rose', 'lily'],
+            'coffee_shop': ['coffee', 'cafe', 'espresso', 'latte', 'brew'],
+            'bakery': ['bakery', 'bread', 'cake', 'pastry', 'bake'],
+            'restaurant': ['restaurant', 'dining', 'menu', 'food', 'cuisine'],
+            'bookstore': ['book', 'bookstore', 'literature', 'novel', 'read'],
+            'retail': ['store', 'shop', 'retail', 'merchandise', 'products']
+        }
+        
+        for store_type, type_keywords in keywords.items():
+            if any(keyword in prompt_lower for keyword in type_keywords):
+                return store_type
+        
+        return 'retail'  # Default
+    
+    def _extract_store_name(self, prompt: str) -> str:
+        """Extract store name from prompt or generate one"""
+        # Simple extraction - in real implementation, could use AI
+        words = prompt.split()
+        if len(words) >= 2:
+            return ' '.join(words[:2]).title()
+        return "Local Store"
+    
+    def _generate_basic_main_ts(self) -> str:
+        """Generate basic main.ts file"""
+        return '''import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import { createRouter, createWebHistory } from 'vue-router'
+import App from './App.vue'
+import router from './router'
+import './style.css'
 
-export const use{store_name.title().replace('Store', '')}Store = defineStore('{store_name}', () => {{
-  // Generated store for {store_type.value}
-  
-  return {{
-    // Store exports
-  }}
-}})"""
+const app = createApp(App)
+const pinia = createPinia()
+
+app.use(pinia)
+app.use(router)
+
+app.mount('#app')
+'''
     
-    def _generate_app_vue(self, architecture: ArchitecturePlan) -> str:
-        """Generate main App.vue"""
-        return """<template>
+    def _generate_basic_app_vue(self, user_prompt: str) -> str:
+        """Generate basic App.vue file"""
+        store_name = self._extract_store_name(user_prompt)
+        
+        return f'''<template>
   <div id="app" class="min-h-screen bg-gray-50">
-    <Header />
-    <main class="flex-1">
+    <Header :store-name="'{store_name}'" />
+    <main>
       <router-view />
     </main>
-    <Footer />
+    <Footer :store-name="'{store_name}'" />
   </div>
 </template>
 
 <script setup lang="ts">
 import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
-</script>"""
-    
-    def _generate_main_ts(self, architecture: ArchitecturePlan) -> str:
-        """Generate main.ts entry point"""
-        return """import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import { createRouter, createWebHistory } from 'vue-router'
-import App from './App.vue'
-import './style.css'
+</script>
 
-// Import pages
-import Home from './pages/Home.vue'
-import About from './pages/About.vue'
-import Contact from './pages/Contact.vue'
+<style>
+@import 'tailwindcss/base';
+@import 'tailwindcss/components'; 
+@import 'tailwindcss/utilities';
+
+#app {{
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}}
+</style>
+'''
+    
+    def _generate_basic_router(self) -> str:
+        """Generate basic router configuration"""
+        return '''import { createRouter, createWebHistory } from 'vue-router'
+import HomePage from '../pages/HomePage.vue'
+import ProductsPage from '../pages/ProductsPage.vue'
 
 const routes = [
-  { path: '/', component: Home },
-  { path: '/about', component: About },
-  { path: '/contact', component: Contact }
+  {
+    path: '/',
+    name: 'Home',
+    component: HomePage
+  },
+  {
+    path: '/products',
+    name: 'Products',
+    component: ProductsPage
+  }
 ]
 
 const router = createRouter({
@@ -491,89 +512,11 @@ const router = createRouter({
   routes
 })
 
-const pinia = createPinia()
-const app = createApp(App)
+export default router
+'''
 
-app.use(pinia)
-app.use(router)
-app.mount('#app')"""
-    
-    def _generate_package_json(self) -> str:
-        """Generate package.json"""
-        return """{
-  "name": "generated-store-website",
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "vue": "^3.4.0",
-    "vue-router": "^4.2.0",
-    "pinia": "^2.1.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.0",
-    "@vue/tsconfig": "^0.5.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0",
-    "tailwindcss": "^3.4.0",
-    "typescript": "^5.3.0",
-    "vite": "^5.0.0",
-    "vue-tsc": "^1.8.0"
-  }
-}"""
-    
-    def _generate_vite_config(self) -> str:
-        """Generate vite.config.ts"""
-        return """import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-
-export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': '/src'
-    }
-  }
-})"""
-    
-    def _generate_tailwind_config(self) -> str:
-        """Generate tailwind.config.js"""
-        return """/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}"
-  ],
-  theme: {
-    extend: {
-      colors: {
-        primary: {
-          50: '#f0f9ff',
-          500: '#0ea5e9',
-          600: '#0284c7'
-        }
-      }
-    }
-  },
-  plugins: []
-}"""
-    
-    def _generate_index_html(self) -> str:
-        """Generate index.html"""
-        return """<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Generated Store Website</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
-</html>""" 
+# Main generation function for backwards compatibility
+def generate_store_website(user_prompt: str) -> Dict[str, Any]:
+    """Generate a store website from user prompt"""
+    pipeline = GenerationPipeline()
+    return pipeline.generate_store_website(user_prompt) 

@@ -4,14 +4,26 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 import sys
 import os
+from typing import Dict, Any
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 try:
     from generator.stages.pipeline import GenerationPipeline
+    from generator.config.openai_client import test_openai_setup
     MODERN_PIPELINE_AVAILABLE = True
-except ImportError:
+    
+    # Test AI setup on import
+    ai_status = test_openai_setup()
+    if ai_status['status'] != 'success':
+        print(f"⚠️  AI Setup Warning: {ai_status.get('error', 'Connection failed')}")
+        print("   Falling back to template-based generation")
+    else:
+        print(f"✅ AI Ready: {ai_status['model']} via OpenRouter")
+        
+except ImportError as e:
     MODERN_PIPELINE_AVAILABLE = False
-    print("Warning: Modern generation pipeline not available, falling back to legacy generation")
+    print(f"Warning: Modern generation pipeline not available: {e}")
+    print("Falling back to legacy generation")
 
 load_dotenv()
 

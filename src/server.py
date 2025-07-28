@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template, send_from_directory, jsonify, send_file
 from flask_cors import CORS
-from main import create_website
+from main import generate_with_modern_pipeline
 from database import DatabaseManager
 import os
 import re
@@ -88,20 +88,72 @@ def generate():
         if len(prompt) > 1000:
             return jsonify({"error": "Prompt is too long. Please keep it under 1000 characters."}), 400
         
-        result = create_website(prompt)
+        result = generate_with_modern_pipeline(prompt)
         
         if "error" in result:
             return jsonify({"error": result["error"]}), 500
 
-        # Find the main HTML file in the list of generated files
-        main_file = next((f for f in result.get("files", []) if f.endswith('.html')), None)
+        # Handle the new result format from modern pipeline
+        files_generated = result.get("files_generated", [])
+        
+        # Debug: check what we got from the generation
+        print(f"Debug: Generation result keys: {list(result.keys())}")
+        print(f"Debug: files_generated from result: {files_generated}")
+        print(f"Debug: generation_method: {result.get('generation_method')}")
+        
+        if not files_generated:
+            # Fallback: check if there are files in the output directory
+            import os
+            output_dir = os.path.join(os.getcwd(), '..', 'output')
+            if os.path.exists(output_dir):
+                all_files = []
+                for root, dirs, files in os.walk(output_dir):
+                    for file in files:
+                        rel_path = os.path.relpath(os.path.join(root, file), output_dir)
+                        all_files.append(rel_path)
+                files_generated = all_files
+                print(f"Debug: Found {len(files_generated)} files in output directory")
+                print(f"Debug: Sample files: {files_generated[:5]}")
+        
+        # Find the main file - could be index.html (legacy) or Vue.js app structure
+        main_file = None
+        
+        # Check for Vue.js application structure (modern pipeline)
+        is_vue_app = any(f.startswith('src/') for f in files_generated) or any(f in ['package.json', 'vite.config.ts'] for f in files_generated)
+        if is_vue_app:
+            # This is a Vue.js application - create proper index.html
+            main_file = 'index.html'
+            # Create/update index.html to load Vue.js app
+            vue_index_content = '''<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generated Store</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>'''
+            
+            import os
+            output_dir = os.path.join(os.getcwd(), '..', 'output')
+            index_path = os.path.join(output_dir, 'index.html')
+            with open(index_path, 'w', encoding='utf-8') as f:
+                f.write(vue_index_content)
+        
+        # Fallback to traditional HTML file
+        if not main_file:
+            main_file = next((f for f in files_generated if f.endswith('.html')), None)
         
         # Check if this is a full-stack application with backend
         has_backend = any(f.endswith(('.py', '.sql')) and f != '__init__.py' for f in result.get("files", []))
         
-        if main_file:
+        if main_file or files_generated:
             # Save to database
-            files_generated = result.get("files", [])
+            # files_generated already set above
             
             # If it has backend files, create database structure
             if has_backend:
@@ -139,9 +191,9 @@ def generate():
                 print(f"Database error: {e}")
                 # Continue even if database fails
             
+            # Use the existing "Launch experience button" system
             preview_url = f"/output/{main_file}"
-            # Create the full URL for the new tab - this was the issue!
-            new_tab_url = f"{request.url_root}output/{main_file}"
+            new_tab_url = f"http://localhost:5001/output/{main_file}"
             return jsonify({
                 "preview_url": preview_url,
                 "new_tab_url": new_tab_url,  # Add full URL for new tab
@@ -154,6 +206,45 @@ def generate():
     except Exception as e:
         app.logger.error(f"Error in generate endpoint: {str(e)}")
         return jsonify({"error": "An unexpected error occurred. Please try again."}), 500
+
+@app.route('/start-vue-dev', methods=['POST'])
+def start_vue_dev():
+    """Start the Vue.js development server for generated applications"""
+    try:
+        import subprocess
+        import os
+        
+        output_dir = os.path.join(os.getcwd(), '..', 'output')
+        package_json_path = os.path.join(output_dir, 'package.json')
+        
+        if not os.path.exists(package_json_path):
+            return jsonify({"error": "No Vue.js application found in output directory"}), 400
+        
+        # Check if dev server is already running
+        try:
+            import requests
+            response = requests.get('http://localhost:3000', timeout=2)
+            if response.status_code == 200:
+                return jsonify({"message": "Vue.js dev server already running", "url": "http://localhost:3000"})
+        except:
+            pass
+        
+        # Start the dev server in background
+        try:
+            subprocess.Popen([
+                'npm', 'run', 'dev', '--', '--host', '0.0.0.0', '--port', '3000'
+            ], cwd=output_dir, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            return jsonify({
+                "message": "Vue.js dev server starting",
+                "url": "http://localhost:3000",
+                "note": "Please wait a few seconds for the server to start"
+            })
+        except Exception as e:
+            return jsonify({"error": f"Failed to start dev server: {str(e)}"}), 500
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/health')
 def health_check():
