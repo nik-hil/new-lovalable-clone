@@ -1,0 +1,232 @@
+# Store Generator Project - Cursor Rules
+
+## Project Overview
+This is a multi-stage AI-powered generator for modern mom-and-pop store websites using Vue.js 3, Vite, and a design system approach.
+
+## Tech Stack
+- **Frontend**: Vue.js 3 (Composition API), Vite, TypeScript
+- **Styling**: Tailwind CSS + Custom Design System
+- **State**: Pinia (Vue store)
+- **Backend**: Flask + SQLAlchemy
+- **Database**: MySQL/PostgreSQL
+- **AI**: OpenAI-compatible models (kimi-k2)
+
+## Code Style & Conventions
+
+### Vue.js Components
+- Use Composition API with `<script setup>`
+- TypeScript for all new components
+- Props with proper TypeScript interfaces
+- Emit events with proper typing
+- Use `ref()` and `reactive()` appropriately
+
+### File Naming
+- Components: PascalCase (e.g., `ProductCard.vue`)
+- Composables: camelCase with `use` prefix (e.g., `useCart.ts`)
+- Stores: camelCase (e.g., `productStore.ts`)
+- Utils: camelCase (e.g., `formatPrice.ts`)
+
+### Directory Structure
+```
+src/
+├── components/           # Reusable UI components
+│   ├── ui/              # Basic UI components (Button, Input, etc.)
+│   ├── store/           # Store-specific components
+│   └── generated/       # AI-generated components
+├── stores/              # Pinia stores
+├── composables/         # Vue composables
+├── utils/               # Utility functions
+├── types/               # TypeScript types
+├── styles/              # CSS/Tailwind customizations
+└── templates/           # Generation templates
+
+generator/
+├── design_system/       # Design system definitions
+├── stages/             # Multi-stage generation pipeline
+├── templates/          # Code templates
+└── validators/         # Generation validators
+```
+
+### Component Structure
+```vue
+<template>
+  <!-- Clean, semantic HTML -->
+</template>
+
+<script setup lang="ts">
+// Imports first
+// Types/interfaces
+// Props/emits
+// Composables/stores
+// Reactive data
+// Computed properties
+// Methods
+// Lifecycle hooks
+</script>
+
+<style scoped>
+/* Use Tailwind classes primarily */
+/* Custom CSS only when necessary */
+</style>
+```
+
+### Import Organization
+1. Vue core imports
+2. Third-party libraries
+3. Components
+4. Composables/stores
+5. Types
+6. Utils
+
+### Design System Usage
+- Always use design tokens (colors, spacing, typography)
+- Prefer composition over inheritance
+- Use semantic naming (primary, secondary, accent)
+- Mobile-first responsive design
+
+## Patterns to Follow
+
+### State Management
+- Use Pinia stores for global state
+- Use composables for reusable logic
+- Keep components focused and pure
+
+### Error Handling
+- Proper error boundaries
+- User-friendly error messages
+- Graceful degradation
+
+### Performance
+- Lazy load components when appropriate
+- Use proper key attributes in v-for
+- Optimize images and assets
+
+### Accessibility
+- Semantic HTML elements
+- Proper ARIA labels
+- Keyboard navigation support
+- Color contrast compliance
+
+## AI Generation Guidelines
+
+### Prompt Structure
+- Always include design system constraints
+- Specify component dependencies
+- Include responsive behavior requirements
+- Define interaction patterns
+
+### Code Quality
+- Generated code must pass TypeScript checks
+- Must follow established patterns
+- Include proper documentation
+- Add appropriate tests
+
+## Development Workflow
+
+### Before Starting
+1. Check existing design system components
+2. Review similar implementations
+3. Consider responsive behavior
+4. Plan component composition
+
+### During Development
+1. Use TypeScript strict mode
+2. Follow established patterns
+3. Write self-documenting code
+4. Consider edge cases
+
+### Code Review
+1. Verify design system compliance
+2. Check TypeScript errors
+3. Test responsive behavior
+4. Validate accessibility
+
+## Forbidden Patterns
+- Avoid inline styles (use Tailwind/design system)
+- No jQuery or legacy libraries
+- Don't mix Options API with Composition API
+- Avoid deep component nesting (max 3 levels)
+- No hardcoded values (use design tokens)
+
+## Common Tasks
+
+### Creating New Component
+1. Define TypeScript interfaces
+2. Use design system tokens
+3. Add proper documentation
+4. Include responsive classes
+5. Test with different props
+
+### Adding Store Logic
+1. Define typed state
+2. Use proper action patterns
+3. Include error handling
+4. Add loading states
+
+### Styling Components
+1. Use Tailwind utility classes
+2. Follow design system spacing
+3. Ensure mobile responsiveness
+4. Test dark mode compatibility
+
+## File Templates
+
+When creating new files, follow these templates:
+
+### Vue Component Template
+```vue
+<template>
+  <div class="component-name">
+    <!-- Content here -->
+  </div>
+</template>
+
+<script setup lang="ts">
+interface Props {
+  // Define props
+}
+
+interface Emits {
+  // Define emits
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
+</script>
+```
+
+### Pinia Store Template
+```ts
+import { defineStore } from 'pinia'
+
+export const useStoreName = defineStore('storeName', () => {
+  // State
+  const state = ref()
+  
+  // Getters
+  const getter = computed(() => {})
+  
+  // Actions
+  const action = async () => {}
+  
+  return {
+    state,
+    getter,
+    action
+  }
+})
+```
+
+## Performance Considerations
+- Use `v-show` vs `v-if` appropriately
+- Implement virtual scrolling for large lists
+- Lazy load images and heavy components
+- Optimize bundle size with proper imports
+
+## Testing Strategy
+- Unit tests for utilities and composables
+- Component tests with Vue Testing Library
+- E2E tests for critical user flows
+- Visual regression tests for UI components
+
+Remember: We're building a **generator system**, so code quality and patterns are crucial since they'll be replicated across many generated stores. 

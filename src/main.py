@@ -2,6 +2,16 @@ import os
 import re
 import google.generativeai as genai
 from dotenv import load_dotenv
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+try:
+    from generator.stages.pipeline import GenerationPipeline
+    MODERN_PIPELINE_AVAILABLE = True
+except ImportError:
+    MODERN_PIPELINE_AVAILABLE = False
+    print("Warning: Modern generation pipeline not available, falling back to legacy generation")
 
 load_dotenv()
 
@@ -250,11 +260,43 @@ SECRET_KEY=your-secret-key-here
     
     return generated_files
 
-def create_website(prompt: str):
-    """
-    This function takes a prompt and creates or modifies a website based on it.
-    Uses an iterative approach to generate all required files.
-    """
+def generate_with_modern_pipeline(prompt: str) -> Dict[str, Any]:
+    """Generate using the new multi-stage Vue.js pipeline"""
+    if not MODERN_PIPELINE_AVAILABLE:
+        return generate_website_legacy(prompt)
+    
+    try:
+        pipeline = GenerationPipeline()
+        result = pipeline.generate_store_website(prompt)
+        
+        # Convert to our expected format
+        files_generated = list(result['files'].keys())
+        
+        # Write files to output directory
+        for file_path, content in result['files'].items():
+            full_path = os.path.join('output', file_path)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            
+            with open(full_path, 'w', encoding='utf-8') as f:
+                if isinstance(content, dict):
+                    import json
+                    f.write(json.dumps(content, indent=2))
+                else:
+                    f.write(content)
+        
+        return {
+            'files_generated': files_generated,
+            'generation_method': 'modern_pipeline',
+            'validation_results': result.get('validation', {}),
+            'metadata': result.get('metadata', {})
+        }
+        
+    except Exception as e:
+        print(f"Modern pipeline failed: {e}")
+        return generate_website_legacy(prompt)
+
+def generate_website_legacy(prompt: str) -> Dict[str, Any]:
+    """Legacy generation method (existing code)"""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         return {"error": "GEMINI_API_KEY not found. Please create a .env file with your Gemini API key."}
